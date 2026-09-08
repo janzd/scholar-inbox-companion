@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Scholar Clipper timing comparison</title>
+<style>body{font:16px/1.6 system-ui;max-width:1000px;margin:40px auto;padding:0 24px;color:#243b3a}button,input{font:inherit;padding:8px 12px}input{width:170px}table{border-collapse:collapse;width:100%;margin-top:24px}td,th{padding:8px;text-align:right;border-bottom:1px solid #ddd}td:first-child,th:first-child{text-align:left}pre{white-space:pre-wrap;font-size:12px}button{background:#255f4e;color:white;border:0;border-radius:6px}button:disabled{opacity:.5}</style></head>
+<body><h1>Scholar Clipper timing comparison</h1>
+<p>Six read-only runs, alternating the old sequential flow and the current parallel flow. Uses the same account, paper, and request code. No papers are saved.</p>
+<label>arXiv ID <input id="arxiv" value="2609.04649"></label> <button id="run">Run comparison</button>
+<p id="status" role="status">Ready.</p>
+<p>Times include downloading the arXiv title, checking sign-in, searching, reading paper details, and loading collections. They exclude popup creation and rendering. No new application cache is used; normal browser and server caches may affect repeated runs.</p>
+<table><thead><tr><th>Run</th><th>Total (ms)</th><th>arXiv (ms)</th><th>Login (ms)</th><th>Search (ms)</th><th>Details (ms)</th><th>Collections (ms)</th></tr></thead><tbody id="rows"></tbody></table>
+<p id="summary"></p><pre id="data"></pre><script type="module" src="benchmark.js"></script></body></html>

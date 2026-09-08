@@ -1,0 +1,23 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and generated files
+node_modules/
+coverage/
+dist/
+*.zip
+*.crx
+*.log
+
+# Scratch files and OS/editor metadata
+work/
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.swo

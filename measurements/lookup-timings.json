@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-09",
+  "arxiv_id": "2609.04649",
+  "source": "Installed Chrome extension benchmark page, authenticated requests through ScholarClient",
+  "order": [
+    "sequential",
+    "parallel",
+    "parallel",
+    "sequential",
+    "sequential",
+    "parallel"
+  ],
+  "runs": [
+    {
+      "run": 1,
+      "mode": "sequential",
+      "total_ms": 2169,
+      "arxiv_ms": 14,
+      "login_ms": 809,
+      "search_ms": 489,
+      "details_ms": 537,
+      "collections_ms": 305
+    },
+    {
+      "run": 2,
+      "mode": "parallel",
+      "total_ms": 1396,
+      "arxiv_ms": 12,
+      "login_ms": 301,
+      "search_ms": 494,
+      "details_ms": 588,
+      "collections_ms": 302
+    },
+    {
+      "run": 3,
+      "mode": "parallel",
+      "total_ms": 1342,
+      "arxiv_ms": 12,
+      "login_ms": 304,
+      "search_ms": 490,
+      "details_ms": 534,
+      "collections_ms": 306
+    },
+    {
+      "run": 4,
+      "mode": "sequential",
+      "total_ms": 1650,
+      "arxiv_ms": 11,
+      "login_ms": 311,
+      "search_ms": 492,
+      "details_ms": 530,
+      "collections_ms": 305
+    },
+    {
+      "run": 5,
+      "mode": "sequential",
+      "total_ms": 1655,
+      "arxiv_ms": 16,
+      "login_ms": 303,
+      "search_ms": 488,
+      "details_ms": 543,
+      "collections_ms": 303
+    },
+    {
+      "run": 6,
+      "mode": "parallel",
+      "total_ms": 1355,
+      "arxiv_ms": 12,
+      "login_ms": 305,
+      "search_ms": 496,
+      "details_ms": 539,
+      "collections_ms": 307
+    }
+  ],
+  "sequential_median_ms": 1655,
+  "parallel_median_ms": 1355,
+  "difference_ms": 300,
+  "reduction_percent": 18.1,
+  "scope": "Metadata retrieval through completed paper and collection lookup; excludes popup creation, worker startup, messaging, and rendering. Browser/server caches were not cleared."
+}

@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Scholar Clipper",
+  "version": "0.1.1",
+  "description": "Save the arXiv paper you are reading to an existing Scholar Inbox collection.",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://api.scholar-inbox.com/*",
+    "https://arxiv.org/*"
+  ],
+  "action": {
+    "default_title": "Save to Scholar Inbox",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
