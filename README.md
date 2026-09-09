@@ -42,7 +42,7 @@ No build step or dependency installation is required. Keep the extension folder 
 3. Check the matched title. If candidate records appear, check their titles and authors and click **Use this paper**. Then select a collection. Use the filter to find a collection by name.
 4. Click **Save to [collection]**. The extension checks the paper’s collection membership before showing a confirmed save.
 
-The Scholar Inbox tab does not need to remain open. Use **Edit title / search again** to correct a title. A unique exact identifier or normalized title match opens the collection picker automatically. Similar or duplicate titles require you to select a result.
+The Scholar Inbox tab does not need to remain open. Use **Edit title / Search again** to correct a title. A unique exact identifier or normalized title match opens the collection picker automatically. Similar or duplicate titles require you to select a result.
 
 For known PDF links, the extension first tries the associated paper page. Otherwise, it reads the PDF locally and automatically searches using the extracted title. Check the matched paper before saving; you can edit the title if extraction was inaccurate. If a PDF URL has no `.pdf` suffix, use **Read this tab as a PDF** in the fallback view. You can also choose a downloaded PDF or enter its title manually. Choosing a local file does not upload it.
 
