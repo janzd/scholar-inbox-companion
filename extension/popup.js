@@ -188,8 +188,8 @@ async function start({refresh = false} = {}) {
       if (!raw.title && plan.landingUrl && plan.landingUrl !== plan.url) {
         try {
           status("Reading the paper’s landing page…");
-          const bytes = await fetchPublic(plan.landingUrl, {maxBytes: 2 * 1024 * 1024});
-          raw = readDocument(new DOMParser().parseFromString(new TextDecoder().decode(bytes), "text/html"));
+          const {html} = await send({type: "landingPage", url: plan.url});
+          raw = readDocument(new DOMParser().parseFromString(html, "text/html"));
         } catch { /* Fall back to the open PDF or an editable title. */ }
       }
     }

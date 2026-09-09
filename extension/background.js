@@ -1,5 +1,6 @@
 import {ScholarClient} from "./core.js";
 import {LookupCache} from "./cache.js";
+import {sourcePlan, fetchPublic} from "./sources.js";
 const cache = new LookupCache({storage: chrome.storage?.session});
 const client = new ScholarClient(undefined, {cache});
 let saving = false;
@@ -19,6 +20,16 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
         return {mode};
       }
       case "metadata": return {html: await client.arxivPage(message.arxivId)};
+      case "landingPage": {
+        const plan = sourcePlan(message.url);
+        if (!["OpenReview", "CVF Open Access"].includes(plan.label) || !plan.landingUrl || plan.landingUrl === plan.url) {
+          throw new Error("This tab has no supported alternate paper page.");
+        }
+        // Fetch in the worker: document fetches can process HTTP Link preloads,
+        // downloading unused publisher stylesheets into the popup.
+        const bytes = await fetchPublic(plan.landingUrl, {maxBytes: 2 * 1024 * 1024});
+        return {html: new TextDecoder().decode(bytes)};
+      }
       case "lookup": return await client.lookup(message.arxivId, message.title);
       case "resolve": return await client.resolve(message.metadata, {refresh: message.refresh === true || message.baseline === true, parallel: message.baseline !== true});
       case "choose": return {paper: await client.choose(message.candidate)};

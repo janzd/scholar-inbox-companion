@@ -1,6 +1,6 @@
 {
   "name": "scholar-inbox-companion",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Save papers from research websites and PDFs to Scholar Inbox collections.",
   "type": "module",
