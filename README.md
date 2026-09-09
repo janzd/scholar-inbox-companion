@@ -8,6 +8,7 @@ Scholar Inbox Companion is an unofficial Chrome extension that adds a collection
 
 ## Features
 
+- Choose Light, Dark, or System appearance, remembered across popup openings and browser restarts.
 - Show the detected title immediately while lookup continues, and reuse recent record mappings on repeat opens.
 - Recognize papers on arXiv, CVF Open Access, and OpenReview.
 - Read scholarly citation metadata on other websites.
@@ -47,6 +48,10 @@ The Scholar Inbox tab does not need to remain open. Use **Edit title / Search ag
 
 For known PDF links, the extension first tries the associated paper page. Otherwise, it reads the PDF locally and automatically searches using the extracted title. Check the matched paper before saving; you can edit the title if extraction was inaccurate. If a PDF URL has no `.pdf` suffix, use **Read this tab as a PDF** in the fallback view. You can also choose a downloaded PDF or enter its title manually. Choosing a local file does not upload it.
 
+### Appearance
+
+Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Your choice is saved locally in this Chrome profile and also applies to the timing page.
+
 ### Updating
 
 If you cloned the repository, run `git pull --ff-only` from its folder. If you downloaded a ZIP, replace the extension files with the updated version. Then open `chrome://extensions`, click **Reload** on Scholar Inbox Companion, and reopen the popup.
@@ -62,6 +67,8 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
 | `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
+
+The appearance preference is stored in extension-local Web Storage and persists across browser restarts. It contains only `light`, `dark`, or `system` and is never sent to a website.
 
 There is no persistent access to all websites and no background scanning of tabs. Page/PDF downloads do not follow redirects. Downloads normally omit credentials; HTTPS OpenReview `/forum?id=…` and `/pdf?id=…` requests let Chrome attach the existing OpenReview session and browser-verification cookies. The extension does not read or copy cookie values, and this exception adds no host or cookie permissions. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
 
@@ -111,4 +118,4 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 | [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |
 | [`measurements/`](measurements/) | Lookup timing results and methodology. |
 
-For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, or `&view=manual` to inspect the fallback screens.
+For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the icon switch to inspect either palette. Preview preferences are separate from the installed extension.
