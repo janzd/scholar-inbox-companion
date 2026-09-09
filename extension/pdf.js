@@ -35,8 +35,8 @@ export async function readPdf(bytes) {
         const doiHints = [...new Set([...firstPage.matchAll(/(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)(10\.\d{4,9}\/[^\s<>]+)/gi)].map(m => normalizeDoi(m[1])).filter(Boolean))];
         const title = infoTitle.length >= 8 && infoTitle.length <= 1000 && !/^(?:untitled|microsoft|latex|arxiv|document|paper\.pdf)/i.test(infoTitle)
           ? infoTitle : titleFromItems(content.items);
-        // PDF text is a suggestion, never an authoritative identity or a query
-        // sent automatically. The user reviews it before searching.
+        // Text proposes the search title. Identifier hints may refer to cited
+        // papers and must not be used as authoritative match evidence.
         return {title, authors: String(metadata.info?.Author || "").slice(0, 1000), identifierHints: [...arxivHints, ...doiHints]};
       })(),
       new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("Reading the PDF timed out. Enter its title instead.")), 12000); })

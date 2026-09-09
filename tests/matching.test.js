@@ -18,13 +18,14 @@ function environment(rows = [record], detail = record, {readBack = true, permiss
   return {client, calls, writes: () => calls.filter(c => c.path === '/add_paper_to_collection/')};
 }
 
-test('title-only results always need a deliberate selection, even with one exact title', async () => {
-  const {client, calls} = environment(); const result = await client.resolve({title: record.title});
-  assert.equal(result.paper, undefined); assert.equal(result.candidates.length, 1);
-  assert.equal(result.candidates[0].year, '2024');
-  assert.equal(calls.some(c => c.path.startsWith('/papers/')), false);
-  const paper = await client.choose(result.candidates[0]);
-  assert.equal(paper.paperId, 42); assert.equal(paper.arxivId, null);
+test('a unique normalized title opens authenticated detail without an extra choice', async () => {
+  const {client, calls, writes} = environment(); const result = await client.resolve({title: 'SEGMENT & Caption Anything'});
+  assert.equal(result.paper, undefined, 'similar titles still require selection');
+  const exact = await client.resolve({title: '  Segment and Caption Anything!  '});
+  assert.equal(exact.match, 'title'); assert.equal(exact.paper.paperId, 42);
+  assert.equal(exact.paper.arxivId, null); assert.equal(exact.paper.year, '2024');
+  assert.equal(calls.some(c => c.path.startsWith('/papers/')), true);
+  assert.equal(writes().length, 0);
 });
 
 test('unique exact identifiers auto-match; conflicting identifiers exclude results', async () => {
@@ -62,7 +63,7 @@ test('bad candidates and mismatched source IDs cannot silently select a paper', 
 
 test('non-arXiv save verifies selected title and ID, current permissions, and read-back', async () => {
   const {client, writes} = environment();
-  const result = await client.resolve({title: record.title}); const paper = await client.choose(result.candidates[0]);
+  const {paper} = await client.resolve({title: record.title});
   assert.equal((await client.save({...paper, collectionId: '3'})).state, 'saved'); assert.equal(writes().length, 1);
   assert.equal((await client.save({...paper, collectionId: '3'})).state, 'already_saved'); assert.equal(writes().length, 1);
   for (const bad of [{title: 'Wrong paper'}, {paperId: 10}, {title: undefined}]) {

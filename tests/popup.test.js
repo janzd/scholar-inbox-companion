@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {parseHTML} from 'linkedom';
+import {samplePdf} from './helpers/pdf.js';
 import {readDocument} from '../extension/sources.js';
 
 const html = await readFile(new URL('../extension/popup.html', import.meta.url), 'utf8');
@@ -9,15 +10,16 @@ const next = () => new Promise(setImmediate);
 const candidate = {paperId: 42, slug: 'Huang2024_Segment', title: 'Segment and Caption Anything', authors: 'Xiaoke Huang', arxivId: null, year: '2024'};
 const collection = {id: '3', name: 'Vision', writable: true};
 
-async function popup(sendMessage) {
+async function popup(sendMessage, {url = "https://openaccess.thecvf.com/content/CVPR2024/html/example.html", pageHtml = '<div id="papertitle">Segment and Caption Anything</div>', fetchFn} = {}) {
   const {document, window} = parseHTML(html);
-  const page = parseHTML('<div id="papertitle">Segment and Caption Anything</div>').document;
-  const saved = Object.fromEntries(['document', 'location', 'chrome'].map(k => [k, globalThis[k]]));
+  const page = parseHTML(pageHtml).document;
+  const saved = Object.fromEntries(['document', 'location', 'chrome', 'fetch'].map(k => [k, globalThis[k]]));
   Object.assign(globalThis, {document, location: {search: ''}, chrome: {
     runtime: {id: 'test', sendMessage},
-    tabs: {query: async () => [{id: 1, url: 'https://openaccess.thecvf.com/content/CVPR2024/html/example.html'}]},
+    tabs: {query: async () => [{id: 1, url}]},
     scripting: {executeScript: async ({func}) => { assert.equal(func.name, readDocument.name); return [{result: func(page)}]; }}
   }});
+  if (fetchFn) globalThis.fetch = fetchFn;
   await import(`../extension/popup.js?test=${Math.random()}`); await next();
   return {document, click: id => document.getElementById(id).click(), input: (id, value) => {
     const element = document.getElementById(id); element.value = value; element.dispatchEvent(new window.Event('input'));
@@ -70,5 +72,49 @@ test('search failure retains manual title and PDF fallback', async () => {
     assert.equal(env.document.getElementById('manual').hidden, false);
     assert.equal(env.document.getElementById('pdf-tools').hidden, false);
     assert.match(env.document.getElementById('status').textContent, /Sign in/);
+  } finally { env.restore(); }
+});
+
+async function until(check) {
+  for (let i = 0; i < 200; i++) {
+    if (check()) return;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.fail('Popup did not reach the expected state');
+}
+
+test('a PDF title automatically triggers search and shows the matched collection picker', async () => {
+  const messages = [];
+  const env = await popup(async message => {
+    messages.push(message);
+    return {ok: true, data: {paper: {...candidate, title: message.metadata.title, collectionIds: []}, collections: [collection], match: 'title'}};
+  }, {url: 'https://example.org/paper.pdf', pageHtml: '', fetchFn: async () => new Response(samplePdf())});
+  try {
+    await until(() => !env.document.getElementById('paper').hidden);
+    assert.equal(messages.length, 1); assert.equal(messages[0].type, 'resolve');
+    assert.equal(messages[0].metadata.title, 'A Useful Paper About Learning');
+    assert.equal(env.document.getElementById('match-label').textContent, '✓ Title match');
+    assert.equal(env.document.getElementById('manual').hidden, true);
+    assert.equal(env.document.getElementById('pdf-tools').hidden, true);
+  } finally { env.restore(); }
+});
+
+test('an unreadable PDF title keeps manual entry without submitting an empty search', async () => {
+  const messages = [];
+  const env = await popup(async message => { messages.push(message); }, {
+    url: 'https://example.org/paper.pdf', pageHtml: '', fetchFn: async () => new Response(samplePdf({withTitle: false, text: ''}))
+  });
+  try {
+    await until(() => !env.document.getElementById('manual').hidden);
+    assert.equal(messages.length, 0);
+    assert.match(env.document.getElementById('status').textContent, /no readable title/);
+  } finally { env.restore(); }
+});
+
+test('an old background worker produces reload instructions instead of irrelevant PDF controls', async () => {
+  const env = await popup(async () => ({ok: false, error: 'Unknown request.'}));
+  try {
+    assert.match(env.document.getElementById('status').textContent, /chrome:\/\/extensions/);
+    for (const id of ['manual', 'pdf-tools', 'retry']) assert.equal(env.document.getElementById(id).hidden, true);
   } finally { env.restore(); }
 });

@@ -4,7 +4,7 @@ Save papers from research websites and PDFs directly to your [Scholar Inbox](htt
 
 Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
-> **Early preview:** arXiv lookup and collection saving have been verified in live use. The broader website/PDF support in version 0.2 is ready for browser testing; see [validation notes](tests/VALIDATION.md).
+> **Early preview:** arXiv lookup and collection saving have been verified in live use. The broader website/PDF support in version 0.2.1 is ready for browser testing; see [validation notes](tests/VALIDATION.md).
 
 ## Features
 
@@ -13,7 +13,7 @@ Scholar Inbox Companion is an unofficial Chrome extension that adds a collection
 - Extract a title from public or downloaded PDFs locally, with manual correction.
 - Search and choose from your existing Scholar Inbox collections.
 - Match exact arXiv IDs (including versioned links), or DOI when available in Scholar Inbox.
-- Rank other candidates using title, authors, and year, and let you choose the right record.
+- Open a unique matching title automatically; rank ambiguous candidates using title, authors, and year for you to choose.
 - Show collections where the paper is already saved and disable read-only collections.
 - Open the matched paper in Scholar Inbox.
 - Use your existing Scholar Inbox login—no separate account or API key setup.
@@ -42,9 +42,9 @@ No build step or dependency installation is required. Keep the extension folder 
 3. Check the matched title. If candidate records appear, check their titles and authors and click **Use this paper**. Then select a collection. Use the filter to find a collection by name.
 4. Click **Save to [collection]**. The extension checks the paper’s collection membership before showing a confirmed save.
 
-The Scholar Inbox tab does not need to remain open. Use **Edit title / search again** to correct a title. Papers without a unique identifier match require you to select a result, even when there is only one candidate.
+The Scholar Inbox tab does not need to remain open. Use **Edit title / search again** to correct a title. A unique exact identifier or normalized title match opens the collection picker automatically. Similar or duplicate titles require you to select a result.
 
-For known PDF links, the extension first tries the associated paper page. Otherwise, it reads the PDF locally and asks you to review the extracted title before searching. If a PDF URL has no `.pdf` suffix, use **Read this tab as a PDF** in the fallback view. You can also choose a downloaded PDF or enter its title manually. Choosing a local file does not upload it.
+For known PDF links, the extension first tries the associated paper page. Otherwise, it reads the PDF locally and automatically searches using the extracted title. Check the matched paper before saving; you can edit the title if extraction was inaccurate. If a PDF URL has no `.pdf` suffix, use **Read this tab as a PDF** in the fallback view. You can also choose a downloaded PDF or enter its title manually. Choosing a local file does not upload it.
 
 ### Updating
 
@@ -71,6 +71,7 @@ Chrome supplies the existing Scholar Inbox session cookie with authenticated req
 - **PDF extraction is approximate:** Scanned PDFs, missing metadata, and unusual layouts may need a corrected title. OCR is not included. Local `file://` tabs use manual entry or the file chooser rather than broad filesystem access.
 - **Existing collections only:** Create or manage collections in Scholar Inbox.
 - **No match found:** Check the title. The paper may not be indexed in Scholar Inbox, or it may be outside the first 20 title-search results. Records with conflicting known identifiers are excluded. The extension cannot import an unindexed paper.
+- **Reload required / Unknown request:** After updating the files, click **Reload** on Scholar Inbox Companion at `chrome://extensions`. Merely reopening the popup can leave the previous background worker running.
 - **Sign-in required:** If your session expires, sign in to Scholar Inbox in the same Chrome profile and retry.
 - **Unconfirmed save:** The request may have succeeded. Check the paper’s Scholar Inbox page before retrying; uncertain writes are never retried automatically.
 

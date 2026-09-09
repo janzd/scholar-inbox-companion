@@ -5,15 +5,22 @@ const $ = id => document.getElementById(id);
 let currentPaper = null, collections = [], selectedId = null, busy = false;
 let metadata = {}, plan = {}, generation = 0;
 const preview = !globalThis.chrome?.runtime?.id && new URLSearchParams(location.search).has("preview");
+const reloadMessage = "The extension’s background worker needs reloading. Open chrome://extensions, click Reload on Scholar Inbox Companion, then reopen this popup.";
 
 async function send(message) {
   const response = await chrome.runtime.sendMessage(message);
+  if (response?.error === "Unknown request.") throw new Error(reloadMessage);
   if (!response?.ok) throw new Error(response?.error || "The extension could not complete the request. Close and reopen it.");
   return response.data;
 }
 
 function status(message, error = false) { $("status").textContent = message; $("status").classList.toggle("error", error); }
 function error(message) {
+  if (message === reloadMessage) {
+    resetResults(); status(message, true);
+    for (const id of ["retry", "manual", "pdf-tools"]) $(id).hidden = true;
+    return;
+  }
   status(message, true); $("retry").hidden = false;
   $("manual").hidden = false; $("search").disabled = false; $("pdf-tools").hidden = false;
   $("read-pdf").hidden = !plan.supported;
@@ -51,7 +58,7 @@ function showPaper(data) {
   currentPaper = data.paper; collections = data.collections; selectedId = null;
   $("paper-title").textContent = currentPaper.title; $("authors").textContent = currentPaper.authors;
   $("source-label").textContent = currentPaper.arxivId ? `arXiv · ${currentPaper.arxivId}` : (plan.label || "Paper");
-  $("match-label").textContent = data.match === "exact" ? "✓ Exact ID match" : "✓ Selected by you";
+  $("match-label").textContent = data.match === "exact" ? "✓ Exact ID match" : data.match === "title" ? "✓ Title match" : "✓ Selected by you";
   $("scholar-link").href = `${SITE}/paper/${encodeURIComponent(currentPaper.slug)}`;
   $("paper").hidden = false; $("manual").hidden = true; $("retry").hidden = true;
   $("candidates").hidden = true; $("pdf-tools").hidden = true; $("edit-title").hidden = false;
@@ -113,8 +120,12 @@ async function suggestPdf(bytes, ticket) {
   const result = await readPdf(bytes);
   if (ticket !== generation) return;
   metadata = {...metadata, authors: result.authors ? [result.authors] : []};
-  // A different downloaded PDF must not inherit identifiers from the active tab.
-  manual(result.title ? "Review the title extracted from the PDF, then search." : "This PDF has no readable title. Paste the title below (scanned PDFs need manual entry).", result.title);
+  if (result.title?.trim()) {
+    $("manual-title").value = result.title;
+    await lookup(result.title);
+  } else {
+    manual("This PDF has no readable title. Paste the title below (scanned PDFs need manual entry).");
+  }
 }
 
 async function start() {

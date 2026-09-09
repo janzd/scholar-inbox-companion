@@ -176,7 +176,13 @@ export class ScholarClient {
       candidates.sort((a, b) => score(b) - score(a));
       const exact = candidates.filter(c => (arxivId && c.arxivId === arxivId) || (doi && c.doi === doi));
       if (exact.length === 1) return {paper: await this.detail(exact[0].slug, exact[0]), match: "exact"};
-      // Even an identical title needs a deliberate choice without a unique identifier.
+      const sameTitle = candidates.filter(c => normalizeTitle(c.title) === normalizeTitle(title));
+      // A unique normalized title can open the picker; saving is still a
+      // deliberate action after the title/authors and record link are shown.
+      if (!exact.length && sameTitle.length === 1) {
+        return {paper: await this.detail(sameTitle[0].slug, sameTitle[0]), match: "title"};
+      }
+      // Similar titles and duplicate records still require a deliberate choice.
       return {candidates: exact.length ? exact : candidates};
     })();
     const [result, collections] = await Promise.all([paperTask, this.collections()]);
