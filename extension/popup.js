@@ -267,6 +267,16 @@ if (preview) {
   } else if (view === "candidates") {
     metadata = {}; $("manual-title").value = "Segment and Caption Anything";
     showCandidates({collections: sample.collections, candidates: [{paperId: 42, slug: "sample", title: "Segment and Caption Anything", authors: "Xiaoke Huang, Jianfeng Wang", year: "2024"}]}, generation);
-  } else if (view === "manual") { manual("Review the title extracted from the PDF, then search.", "Segment and Caption Anything"); }
-  else { showPaper(sample); }
+  } else if (view === "manual" || view === "error") {
+    plan = {supported: true};
+    manual("Review the title extracted from the PDF, then search.", "Segment and Caption Anything");
+    if (view === "error") { status("Could not find this paper. Edit the title or try again.", true); $("retry").hidden = false; }
+  } else {
+    sample.collections[4].writable = false;
+    showPaper(sample);
+    if (view === "success" || view === "warning") {
+      $("result").hidden = false; $("result").classList.toggle("warning", view === "warning");
+      $("result").textContent = view === "success" ? "Saved to Diffusion Models. Confirmed in Scholar Inbox." : "The save could not be confirmed. Check Scholar Inbox before trying again.";
+    } else if (view === "empty") { $("filter").value = "No matching collection"; renderCollections(); }
+  }
 } else { start(); }
