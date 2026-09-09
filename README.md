@@ -1,63 +1,92 @@
-# Scholar Inbox Companion — collection-saving prototype
+# Scholar Inbox Companion
 
-A local Chrome extension that saves the arXiv paper you are viewing to an existing Scholar Inbox collection. Version 0.1.2 focuses on saving; the richer digest reader is the next component and is not included yet.
+Save papers from arXiv directly to your [Scholar Inbox](https://www.scholar-inbox.com/) collections.
 
-## Install in Chrome
+Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
-1. Open `chrome://extensions` in the Chrome profile where you use Scholar Inbox.
-2. Turn on **Developer mode**.
-3. Click **Load unpacked** and choose this package’s **extension** folder (the folder containing `manifest.json`).
-4. Pin **Scholar Inbox Companion** using Chrome’s extensions menu.
-5. Stay signed in to Scholar Inbox in this profile. Open an arXiv abstract, HTML, or PDF page and click Scholar Inbox Companion.
-6. Check the title, choose a collection, and click **Save to [collection]**. A successful save is checked against fresh Scholar Inbox membership data.
+> **Early preview:** Paper lookup and collection loading have been verified with a signed-in account. Saving is implemented and covered by automated tests, but a real save and its confirmation have not yet been verified end to end.
 
-Do not select the package’s parent folder when loading the extension. To update later, replace the files and click the extension’s Reload button at `chrome://extensions`.
+## Features
 
-## How it works
+- Recognize papers on arXiv abstract, HTML, and PDF pages.
+- Search and choose from your existing Scholar Inbox collections.
+- Match papers by their exact arXiv ID, including versioned links.
+- Show collections where the paper is already saved and disable read-only collections.
+- Open the matched paper in Scholar Inbox.
+- Use your existing Scholar Inbox login—no separate account or API key setup.
 
-The extension gets the arXiv ID from the current tab’s URL and reads the title from that paper’s abstract page. It searches Scholar Inbox by title and accepts only a result with exactly the same arXiv ID (ignoring version suffixes). After checking sign-in, it loads your collections in parallel with the title search and matched-paper detail lookup. It waits for both branches before displaying the collection picker. Saving rechecks the paper identity, collection permission, and existing membership before making one add request, followed by a membership read-back.
+## Installation
 
-If arXiv cannot provide metadata, you can enter the paper title. This does not relax the arXiv ID check. If Scholar Inbox has not indexed the paper, the extension will not save a different paper. Already-saved and read-only collections are shown but cannot be selected. It adds papers only to existing collections; it does not create, delete, rename, or share collections.
+You need Chrome and a Scholar Inbox account. Node.js is only needed for development.
 
-## Access and data
+1. Clone this repository, or use GitHub’s **Code → Download ZIP** and extract it:
 
-- **activeTab**: read the URL of the tab where you clicked the extension.
-- **arxiv.org**: read the corresponding public abstract page.
-- **api.scholar-inbox.com**: search papers and use your signed-in session to read collections and save your selected paper.
+   ```sh
+   git clone https://github.com/janzd/scholar-inbox-companion.git
+   ```
 
-The extension uses browser-managed session cookies through `fetch` with `credentials: include`. It does not read cookie values, request the cookies permission, collect passwords, create API/MCP keys, or store credentials or browsing history. There is no server to host, analytics, AI API, remote executable code, or npm dependency. Data used for matching and the paper you choose to save are sent to Scholar Inbox. Sessions are separate across Chrome profiles.
+2. Open `chrome://extensions` in the Chrome profile where you use Scholar Inbox.
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the repository’s **`extension`** folder—the one containing `manifest.json`.
+5. Pin **Scholar Inbox Companion** from Chrome’s extensions menu for easy access.
 
-## Status and limitations
+No build step or dependency installation is required. Keep the extension folder in place while it is installed.
 
-- Verified against Scholar Inbox’s public frontend request definitions and live public paper responses in September 2026.
-- Public title lookup returned arXiv `2609.04649` with paper ID `4842939`. ID-only search did not return it; the extension therefore searches by title and checks the returned ID.
-- The signed-in collection picker and figure viewer were inspected in the website.
-- All 14 automated tests pass. They cover exact ID matching, duplicate handling, permission checks, stale IDs, session loss, rate limits, uncertain saves, and correct binding of the browser fetch function.
-- **Installed and enabled in the Chrome profile used for Scholar Inbox.** Live testing on September 9, 2026 verified automatic arXiv title retrieval, exact ID matching, the existing signed-in session, authenticated paper details, and loading all 16 collections. Last Visited Papers is correctly marked read-only. The live test exposed a browser fetch receiver bug, which was fixed and covered by a regression test.
-- **A real add/read-back save has not yet been tested.** No paper was added to your real collections during development or the installation test.
-- Uses the website’s current session API, not a documented extension integration contract; future website changes may require adjustments. Public frontend inspection also revealed an API/MCP settings page, but access keys were not created or retrieved.
-- Search considers the first 20 title results. A missing exact match stops the operation rather than guessing.
-- If the save cannot be confirmed, it may have succeeded. Check the Scholar Inbox paper link before retrying. The extension never automatically repeats an uncertain write.
+## Usage
 
-## Checks
+1. Sign in to Scholar Inbox in the same Chrome profile.
+2. Open an arXiv paper and click the extension’s toolbar icon.
+3. Check the matched title, then select a collection. Use the filter to find a collection by name.
+4. Click **Save to [collection]**. The extension checks the paper’s collection membership before showing a confirmed save.
 
-With Node.js 22 or newer, run `npm test` in this package. No install step is required. `INTEGRATION.md` records the endpoint contract used by the prototype.
+The Scholar Inbox tab does not need to remain open. If the extension cannot read the title from arXiv, you can enter it manually; the result must still match the exact arXiv ID.
+
+### Updating
+
+If you cloned the repository, run `git pull --ff-only` from its folder. If you downloaded a ZIP, replace the extension files with the updated version. Then open `chrome://extensions`, click **Reload** on Scholar Inbox Companion, and reopen the popup.
+
+## Privacy and permissions
+
+Requests go directly to arXiv and Scholar Inbox. There is no separate backend, analytics service, or AI service involved in the current extension.
+
+| Permission | Purpose |
+| --- | --- |
+| `activeTab` | Read the current tab’s URL when you click the extension. |
+| `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
+| `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
+
+Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords, API keys, or browsing history. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers.
+
+## Limitations and troubleshooting
+
+- **arXiv only:** Other paper websites are not supported yet.
+- **Existing collections only:** Create or manage collections in Scholar Inbox.
+- **No match found:** Check the title. The paper may not be indexed in Scholar Inbox, or it may be outside the first 20 title-search results. The extension will not substitute a different arXiv ID.
+- **Sign-in required:** If your session expires, sign in to Scholar Inbox in the same Chrome profile and retry.
+- **Unconfirmed save:** The request may have succeeded. Check the paper’s Scholar Inbox page before retrying; uncertain writes are never retried automatically.
+
+The extension currently uses Scholar Inbox’s internal website API. Changes to that API may require updates to the extension.
+
+## Planned
+
+A richer digest reader with abstracts or contribution summaries, figures, and links to the paper and Scholar Inbox. This is not included in the current version.
 
 ## Development
 
-This directory is the Git repository root. The `extension/` directory is also the unpacked extension currently loaded into Chrome; keeping it here preserves that installation path.
+Requires **Node.js 22 or newer**. There are no npm dependencies to install.
 
-- `extension/`: browser extension source, including the read-only timing comparison page.
-- `tests/`: Node.js tests with mocked network responses.
-- `measurements/`: recorded live timing results and methodology.
-- `INTEGRATION.md`: observed internal endpoints and the official API review.
+```sh
+npm run check
+npm test
+```
 
-Run `npm run check` and `npm test` before committing code changes. No dependency installation or build step is required. After editing extension files, use **Reload** on Scholar Inbox Companion at `chrome://extensions`, then reopen its popup. Git starts on the `main` branch; use a feature branch for further work.
+Load `extension/` unpacked in Chrome, edit the source, and reload the extension to test changes. Automated tests use mocked network responses and do not modify a Scholar Inbox account.
 
-Keep credentials, local configuration, downloaded inspection material, and generated archives out of commits. `.gitignore` excludes common local and generated files. The repository contains no API keys; authentication currently uses Chrome's existing Scholar Inbox session.
+| Path | Contents |
+| --- | --- |
+| [`extension/`](extension/) | Extension source and a read-only timing comparison page. |
+| [`tests/`](tests/) | Tests for matching, permissions, save confirmation, errors, and parallel loading. |
+| [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |
+| [`measurements/`](measurements/) | Lookup timing results and methodology. |
 
-For a local UI preview, serve `extension/` with a static server and open `popup.html?preview=1`. The preview clearly labels its example collections and cannot save anything.
-
-## Version 0.1.1 — parallel lookup
-
-Collection loading now overlaps the title search and paper detail request, after the sign-in check. The save path retains its existing checks and read-back sequence. Added tests verify that both lookup branches run concurrently, the UI result waits for both, and collection failures reject the lookup. Reloaded in Chrome and verified live exact-ID matching and all 16 collections. A six-run authenticated comparison measured median request-flow times of 1,655 ms sequential and 1,355 ms parallel (300 ms / 18.1% lower). See `measurements/README.md` for raw results and limitations; popup startup and rendering are excluded.
+For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers.
