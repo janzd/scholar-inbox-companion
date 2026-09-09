@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Scholar Clipper",
-  "version": "0.1.1",
+  "name": "Scholar Inbox Companion",
+  "version": "0.1.2",
   "description": "Save the arXiv paper you are reading to an existing Scholar Inbox collection.",
   "permissions": [
     "activeTab"

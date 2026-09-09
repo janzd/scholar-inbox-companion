@@ -1,14 +1,14 @@
-# Scholar Clipper — collection-saving prototype
+# Scholar Inbox Companion — collection-saving prototype
 
-A local Chrome extension that saves the arXiv paper you are viewing to an existing Scholar Inbox collection. Version 0.1.1 focuses on saving; the richer digest reader is the next component and is not included yet.
+A local Chrome extension that saves the arXiv paper you are viewing to an existing Scholar Inbox collection. Version 0.1.2 focuses on saving; the richer digest reader is the next component and is not included yet.
 
 ## Install in Chrome
 
 1. Open `chrome://extensions` in the Chrome profile where you use Scholar Inbox.
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and choose this package’s **extension** folder (the folder containing `manifest.json`).
-4. Pin **Scholar Clipper** using Chrome’s extensions menu.
-5. Stay signed in to Scholar Inbox in this profile. Open an arXiv abstract, HTML, or PDF page and click Scholar Clipper.
+4. Pin **Scholar Inbox Companion** using Chrome’s extensions menu.
+5. Stay signed in to Scholar Inbox in this profile. Open an arXiv abstract, HTML, or PDF page and click Scholar Inbox Companion.
 6. Check the title, choose a collection, and click **Save to [collection]**. A successful save is checked against fresh Scholar Inbox membership data.
 
 Do not select the package’s parent folder when loading the extension. To update later, replace the files and click the extension’s Reload button at `chrome://extensions`.
@@ -52,7 +52,7 @@ This directory is the Git repository root. The `extension/` directory is also th
 - `measurements/`: recorded live timing results and methodology.
 - `INTEGRATION.md`: observed internal endpoints and the official API review.
 
-Run `npm run check` and `npm test` before committing code changes. No dependency installation or build step is required. After editing extension files, use **Reload** on Scholar Clipper at `chrome://extensions`, then reopen its popup. Git starts on the `main` branch; use a feature branch for further work.
+Run `npm run check` and `npm test` before committing code changes. No dependency installation or build step is required. After editing extension files, use **Reload** on Scholar Inbox Companion at `chrome://extensions`, then reopen its popup. Git starts on the `main` branch; use a feature branch for further work.
 
 Keep credentials, local configuration, downloaded inspection material, and generated archives out of commits. `.gitignore` excludes common local and generated files. The repository contains no API keys; authentication currently uses Chrome's existing Scholar Inbox session.
 

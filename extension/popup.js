@@ -47,7 +47,6 @@ function showPaper(data) {
   currentPaper = data.paper; collections = data.collections; selectedId = null;
   $("paper-title").textContent = currentPaper.title; $("authors").textContent = currentPaper.authors;
   $("arxiv-id").textContent = `arXiv · ${currentPaper.arxivId}`;
-  $("arxiv-link").href = `https://arxiv.org/abs/${currentPaper.arxivId}`;
   $("scholar-link").href = `${SITE}/paper/${encodeURIComponent(currentPaper.slug)}`;
   $("paper").hidden = false; $("manual").hidden = true; $("retry").hidden = true;
   $("result").hidden = true; $("filter").value = ""; status(""); renderCollections(); updateButton();
