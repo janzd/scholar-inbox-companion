@@ -1,6 +1,30 @@
 import {ScholarClient, normalizeArxivId} from './core.js';
 const $ = id => document.getElementById(id);
 const median = values => [...values].sort((a,b)=>a-b)[Math.floor(values.length/2)];
+async function renderPopupTimings() {
+  try {
+    const {popupTimingsV1 = [], popupBenchmarkMode = 'optimized'} = await chrome.storage.session.get(['popupTimingsV1', 'popupBenchmarkMode']);
+    $('popup-mode').textContent = `Toolbar popup mode: ${popupBenchmarkMode}.`;
+    $('popup-data').textContent = JSON.stringify(popupTimingsV1, null, 2);
+    $('popup-status').textContent = popupTimingsV1.length ? `${popupTimingsV1.length} popup opens recorded this browser session.` : 'Open the toolbar popup on a paper, close it, and open it again, then refresh these timings.';
+  } catch { $('popup-status').textContent = 'Reload the extension to enable session storage, then retry.'; }
+}
+$('popup-refresh').addEventListener('click', renderPopupTimings);
+$('popup-clear').addEventListener('click', async () => {
+  try { await chrome.storage.session.remove('popupTimingsV1'); await renderPopupTimings(); }
+  catch { $('popup-status').textContent = 'Could not clear the local timing records.'; }
+});
+renderPopupTimings();
+for (const mode of ['baseline', 'optimized']) {
+  $(`mode-${mode}`).addEventListener('click', async () => {
+    try {
+      const result = await chrome.runtime.sendMessage({type: 'benchmarkMode', mode});
+      if (!result?.ok) throw Error(result?.error || 'Reload the extension first.');
+      await renderPopupTimings();
+      $('popup-status').textContent = 'Lookup cache cleared. Open a paper, close the popup once it is ready, then reopen it to measure first and repeat opens.';
+    } catch (error) { $('popup-status').textContent = error.message; }
+  });
+}
 class TimedClient extends ScholarClient {
   times = {};
   async request(path, body) {

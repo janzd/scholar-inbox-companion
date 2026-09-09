@@ -2,7 +2,13 @@
 <html lang="en"><head><meta charset="utf-8"><title>Scholar Inbox Companion timing comparison</title>
 <style>body{font:16px/1.6 system-ui;max-width:1000px;margin:40px auto;padding:0 24px;color:#243b3a}button,input{font:inherit;padding:8px 12px}input{width:170px}table{border-collapse:collapse;width:100%;margin-top:24px}td,th{padding:8px;text-align:right;border-bottom:1px solid #ddd}td:first-child,th:first-child{text-align:left}pre{white-space:pre-wrap;font-size:12px}button{background:#255f4e;color:white;border:0;border-radius:6px}button:disabled{opacity:.5}</style></head>
 <body><h1>Scholar Inbox Companion timing comparison</h1>
-<p>Six read-only runs, alternating the old sequential flow and the current parallel flow. Uses the same account, paper, and request code. No papers are saved.</p>
+<h2>Recorded toolbar popup timings</h2>
+<p>Open a paper with the toolbar popup, then reopen it. These local records measure document navigation to the painted paper/picker, including script loading and extension messaging. They exclude the delay between the toolbar click and document creation. No titles, URLs, or account information are recorded.</p>
+<p>For a comparison on the same installed build, baseline mode restores the pre-0.3 loading sequence: arXiv download, sign-in before search/collections, no lookup cache, and no early title display. It keeps the current matching and save checks. This is a behavioral baseline, not the old extension binary.</p>
+<button id="mode-baseline">Use baseline loading</button> <button id="mode-optimized">Use optimized loading</button><p id="popup-mode"></p>
+<button id="popup-refresh">Refresh popup timings</button> <button id="popup-clear">Clear popup timings</button><p id="popup-status" role="status"></p><pre id="popup-data"></pre>
+<h2>Historical request-flow comparison</h2>
+<p>Six read-only runs, alternating the original sequential and collection-parallel flows (before version 0.3). Uses the same account, paper, and request code. No papers are saved.</p>
 <label>arXiv ID <input id="arxiv" value="2609.04649"></label> <button id="run">Run comparison</button>
 <p id="status" role="status">Ready.</p>
 <p>Times include downloading the arXiv title, checking sign-in, searching, reading paper details, and loading collections. They exclude popup creation and rendering. No new application cache is used; normal browser and server caches may affect repeated runs.</p>

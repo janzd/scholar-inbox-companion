@@ -8,6 +8,7 @@ Scholar Inbox Companion is an unofficial Chrome extension that adds a collection
 
 ## Features
 
+- Show the detected title immediately while lookup continues, and reuse recent record mappings on repeat opens.
 - Recognize papers on arXiv, CVF Open Access, and OpenReview.
 - Read scholarly citation metadata on other websites.
 - Extract a title from public or downloaded PDFs locally, with manual correction.
@@ -57,13 +58,22 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 | Permission | Purpose |
 | --- | --- |
 | `activeTab` | Temporarily access the tab you click on: read its URL and download public paper pages/PDFs from its origin. |
+| `storage` | Keep a bounded record-lookup cache and timing diagnostics in browser-session memory. |
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
 | `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
 
 There is no persistent access to all websites and no background scanning of tabs. Page/PDF downloads do not follow redirects. Downloads normally omit credentials; HTTPS OpenReview `/forum?id=…` and `/pdf?id=…` requests let Chrome attach the existing OpenReview session and browser-verification cookies. The extension does not read or copy cookie values, and this exception adds no host or cookie permissions. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
 
-Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords, API keys, or browsing history. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers.
+Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords or API keys. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers.
+
+## Popup loading
+
+Version 0.3 reads metadata directly from an open arXiv page where possible and shows the detected title before Scholar Inbox finishes loading. Sign-in, search/detail retrieval, and collection loading overlap.
+
+A five-minute cache (up to 100 entries) remembers resolved paper IDs and slugs, stable identifiers, match type, and hashes of the search inputs and matched title. It lives in `chrome.storage.session`, survives service-worker restarts, and is cleared when the extension or browser restarts. Collections, permissions, memberships, login responses, PDFs, and raw source metadata are never cached. Every open fetches current account data and validates the paper detail; every save still performs fresh identity, permission, and membership checks. **Retry** and **Search Scholar Inbox** bypass the mapping cache.
+
+The timing page (`benchmark.html` in the installed extension) records up to 20 opens using timings and source categories only. Its diagnostic baseline mode allows comparison with the prior loading sequence on the same build. See [the performance report](measurements/popup-loading.md) for measurements, limitations, and the live comparison procedure. Leave the timing page in **optimized** mode for normal use.
 
 ## Limitations and troubleshooting
 
@@ -101,4 +111,4 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 | [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |
 | [`measurements/`](measurements/) | Lookup timing results and methodology. |
 
-For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=candidates` or `&view=manual` to inspect the fallback screens.
+For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, or `&view=manual` to inspect the fallback screens.

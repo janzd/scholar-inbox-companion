@@ -1,0 +1,175 @@
+{
+  "method": "Real popup/client modules in linkedom; simulated I/O; excludes Chrome startup and painting; not a live latency claim",
+  "baselineRevision": "74f81fc",
+  "delaysMs": {
+    "source": 12,
+    "session": 305,
+    "search": 491,
+    "detail": 538,
+    "collections": 305,
+    "tab": 3,
+    "injection": 3,
+    "message": 2
+  },
+  "rows": [
+    {
+      "round": 1,
+      "mode": "before",
+      "open": "first",
+      "metadataMs": 1392,
+      "usableMs": 1392,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 1,
+      "mode": "before",
+      "open": "repeat",
+      "metadataMs": 1366,
+      "usableMs": 1366,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 1,
+      "mode": "after",
+      "open": "first",
+      "metadataMs": 15,
+      "usableMs": 1056,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/search",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 1,
+      "mode": "after",
+      "open": "repeat",
+      "metadataMs": 9,
+      "usableMs": 551,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 2,
+      "mode": "after",
+      "open": "first",
+      "metadataMs": 11,
+      "usableMs": 1046,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/search",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 2,
+      "mode": "after",
+      "open": "repeat",
+      "metadataMs": 11,
+      "usableMs": 555,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 2,
+      "mode": "before",
+      "open": "first",
+      "metadataMs": 1362,
+      "usableMs": 1362,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 2,
+      "mode": "before",
+      "open": "repeat",
+      "metadataMs": 1362,
+      "usableMs": 1363,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 3,
+      "mode": "before",
+      "open": "first",
+      "metadataMs": 1365,
+      "usableMs": 1365,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 3,
+      "mode": "before",
+      "open": "repeat",
+      "metadataMs": 1360,
+      "usableMs": 1360,
+      "requests": [
+        "source",
+        "/session_info",
+        "/search",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 3,
+      "mode": "after",
+      "open": "first",
+      "metadataMs": 10,
+      "usableMs": 1044,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/search",
+        "/papers/Example"
+      ]
+    },
+    {
+      "round": 3,
+      "mode": "after",
+      "open": "repeat",
+      "metadataMs": 11,
+      "usableMs": 556,
+      "requests": [
+        "/session_info",
+        "/get_all_user_collections",
+        "/papers/Example"
+      ]
+    }
+  ]
+}

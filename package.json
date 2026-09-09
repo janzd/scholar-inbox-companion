@@ -1,6 +1,6 @@
 {
   "name": "scholar-inbox-companion",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "description": "Save papers from research websites and PDFs to Scholar Inbox collections.",
   "type": "module",
@@ -8,9 +8,10 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "check": "node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js",
+    "check": "node --check extension/cache.js && node --check extension/timing.js && node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js",
     "test": "node --test tests/*.test.js",
-    "vendor:pdf": "node scripts/vendor-pdf.mjs"
+    "vendor:pdf": "node scripts/vendor-pdf.mjs",
+    "measure:popup": "node scripts/measure-popup.mjs"
   },
   "devDependencies": {
     "linkedom": "0.18.13",

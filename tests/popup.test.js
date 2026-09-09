@@ -66,6 +66,33 @@ test('editing while a lookup is pending prevents stale results from replacing th
   } finally { env.restore(); }
 });
 
+test('shows available metadata immediately, keeping unverified collections and links hidden', async () => {
+  let release;
+  const env = await popup(() => new Promise(resolve => { release = resolve; }));
+  try {
+    assert.equal(env.document.getElementById('paper').hidden, false);
+    assert.equal(env.document.getElementById('paper-title').textContent, candidate.title);
+    assert.equal(env.document.getElementById('collection-picker').hidden, true);
+    assert.equal(env.document.getElementById('scholar-link').hidden, true);
+    assert.equal(env.document.getElementById('edit-title').hidden, false);
+    release({ok: true, data: {paper: {...candidate, collectionIds: []}, collections: [collection], match: 'title'}});
+    await next(); assert.equal(env.document.getElementById('collection-picker').hidden, false);
+  } finally { env.restore(); }
+});
+
+test('arXiv pages use the open tab metadata without a redundant abstract download', async () => {
+  const messages = [];
+  const env = await popup(async message => {
+    messages.push(message);
+    return {ok: true, data: {paper: {...candidate, collectionIds: []}, collections: [collection], match: 'exact'}};
+  }, {url: 'https://arxiv.org/abs/2401.01234v2', pageHtml: '<meta name="citation_title" content="A Useful Paper">'});
+  try {
+    assert.deepEqual(messages.map(m => m.type), ['resolve']);
+    assert.equal(messages[0].metadata.arxivId, '2401.01234');
+    env.click('retry'); await next(); assert.equal(messages.at(-1).refresh, true);
+  } finally { env.restore(); }
+});
+
 test('search failure retains manual title and PDF fallback', async () => {
   const env = await popup(async () => ({ok: false, error: 'Sign in and retry.'}));
   try {

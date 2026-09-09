@@ -2,7 +2,7 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scholar Inbox Companion</title><link rel="stylesheet" href="popup.css"></head>
 <body>
-  <header><div class="brand-icon" aria-hidden="true">S</div><div><strong>Scholar Inbox Companion</strong><span>From your browser to your collection</span></div><span class="version">0.2.2</span></header>
+  <header><div class="brand-icon" aria-hidden="true">S</div><div><strong>Scholar Inbox Companion</strong><span>From your browser to your collection</span></div><span class="version">0.3.0</span></header>
   <main>
     <div id="preview-note" class="preview-note" hidden>Design preview · example collections · no account changes</div>
     <p id="status" role="status" aria-live="polite">Finding the paper in this tab…</p>
@@ -10,12 +10,14 @@
       <div class="eyebrow"><span id="source-label"></span><span id="match-label" class="match"></span></div>
       <h1 id="paper-title"></h1><p id="authors"></p>
       <div class="paper-links"><a id="scholar-link" target="_blank" rel="noopener noreferrer">Scholar Inbox ↗</a></div>
+      <div id="collection-picker" hidden>
       <div class="section-heading"><h2>Save to a collection</h2><span id="collection-count"></span></div>
       <label class="sr-only" for="filter">Find a collection</label><input id="filter" type="search" placeholder="Find a collection…" autocomplete="off">
       <fieldset id="collections"><legend class="sr-only">Your Scholar Inbox collections</legend></fieldset>
       <p id="empty-collections" hidden>No matching collections.</p>
       <button id="save" class="primary" disabled>Choose a collection</button>
       <p id="result" role="status" aria-live="polite" hidden></p>
+      </div>
     </section>
     <section id="candidates" hidden><h2>Choose the matching paper</h2><p class="help">Check the title and authors before continuing.</p><div id="candidate-list"></div></section>
     <section id="manual" hidden><label for="manual-title">Paper title</label><textarea id="manual-title" rows="3" maxlength="1000" placeholder="Enter or paste the paper title"></textarea><button id="search" class="primary">Search Scholar Inbox</button></section>
