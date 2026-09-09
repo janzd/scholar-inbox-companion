@@ -4,7 +4,7 @@ Save papers from research websites and PDFs directly to your [Scholar Inbox](htt
 
 Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
-> **Early preview:** arXiv lookup and collection saving have been verified in live use. The broader website/PDF support in version 0.2.1 is ready for browser testing; see [validation notes](tests/VALIDATION.md).
+> **Early preview:** The user has tested arXiv, OpenReview paper pages, CVF, and open PDFs successfully. Version 0.2.2 addresses an OpenReview PDF verification error and awaits a live retry; see [validation notes](tests/VALIDATION.md).
 
 ## Features
 
@@ -61,12 +61,13 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
 | `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
 
-There is no persistent access to all websites and no background scanning of tabs. Public page/PDF downloads omit credentials and do not follow redirects. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
+There is no persistent access to all websites and no background scanning of tabs. Page/PDF downloads do not follow redirects. Downloads normally omit credentials; HTTPS OpenReview `/forum?id=…` and `/pdf?id=…` requests let Chrome attach the existing OpenReview session and browser-verification cookies. The extension does not read or copy cookie values, and this exception adds no host or cookie permissions. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
 
 Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords, API keys, or browsing history. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers.
 
 ## Limitations and troubleshooting
 
+- **OpenReview verification:** If OpenReview still refuses a PDF, use **Open paper page** in the popup, complete any verification or sign-in requested by OpenReview, then retry. Cookie-blocking settings or an expired verification may still require manual title entry.
 - **Site restrictions:** Login-protected PDFs, browser-verification pages, and restricted browser pages may require manual title entry or choosing a downloaded PDF. If a PDF link redirects, open the final URL and reopen the extension. Cross-origin PDF links are not fetched automatically.
 - **PDF extraction is approximate:** Scanned PDFs, missing metadata, and unusual layouts may need a corrected title. OCR is not included. Local `file://` tabs use manual entry or the file chooser rather than broad filesystem access.
 - **Existing collections only:** Create or manage collections in Scholar Inbox.

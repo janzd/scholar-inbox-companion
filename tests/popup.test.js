@@ -118,3 +118,33 @@ test('an old background worker produces reload instructions instead of irrelevan
     for (const id of ['manual', 'pdf-tools', 'retry']) assert.equal(env.document.getElementById(id).hidden, true);
   } finally { env.restore(); }
 });
+
+test('OpenReview PDF uses the existing session when its forum page cannot supply a title', async () => {
+  const downloads = [], messages = [];
+  const env = await popup(async message => {
+    messages.push(message);
+    return {ok: true, data: {paper: {...candidate, title: message.metadata.title, collectionIds: []}, collections: [collection], match: 'title'}};
+  }, {url: 'https://openreview.net/pdf?id=4vGVQVz5KG', pageHtml: '', fetchFn: async (url, options) => {
+    downloads.push(url);
+    assert.equal(options.credentials, 'include'); assert.equal(options.redirect, 'error');
+    return url.includes('/forum?') ? new Response('Verification required', {status: 403}) : new Response(samplePdf());
+  }});
+  try {
+    await until(() => !env.document.getElementById('paper').hidden);
+    assert.deepEqual(downloads, ['https://openreview.net/forum?id=4vGVQVz5KG', 'https://openreview.net/pdf?id=4vGVQVz5KG']);
+    assert.equal(messages.length, 1); assert.equal(messages[0].metadata.title, 'A Useful Paper About Learning');
+    assert.equal(env.document.getElementById('source-page').hidden, true);
+  } finally { env.restore(); }
+});
+
+test('persistent OpenReview verification offers the exact forum link and does not search', async () => {
+  let queries = 0;
+  const env = await popup(async () => { queries++; }, {
+    url: 'https://openreview.net/pdf?id=4vGVQVz5KG', pageHtml: '', fetchFn: async () => new Response('Verification required', {status: 403})
+  });
+  try {
+    await until(() => !env.document.getElementById('source-page').hidden);
+    assert.equal(env.document.getElementById('source-page').href, 'https://openreview.net/forum?id=4vGVQVz5KG');
+    assert.equal(queries, 0); assert.equal(env.document.getElementById('manual').hidden, false);
+  } finally { env.restore(); }
+});

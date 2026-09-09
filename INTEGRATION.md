@@ -52,3 +52,9 @@ The same search/detail/collection endpoints are reused for all sources. Search r
 Candidate selection retrieves authenticated detail and checks the selected Scholar Inbox ID and normalized title, plus any known arXiv ID/DOI. Saving repeats these checks and checks current collection permissions and membership before the single write. The read-back validates the same identity and membership. A missing arXiv ID no longer prevents saving a user-selected, verified Scholar Inbox record.
 
 Source metadata and PDFs are processed locally. Only the extracted/entered title is included in the Scholar Inbox search query. First-page PDF identifier hints are not used as exact-match evidence because they may identify a referenced paper.
+
+## OpenReview source session — version 0.2.2
+
+The reported PDF (`4vGVQVz5KG`) returned HTTP 403 anonymously, and its documented notes API returned `ChallengeRequiredError`. Source requests to HTTPS `openreview.net` / `www.openreview.net`, on `/forum` or `/pdf` with a valid note ID, now use `credentials: "include"` so Chrome can attach an existing verification/session cookie. Other source requests retain `credentials: "omit"`; redirects remain rejected. No cookie values are read and no API token or new host permission is introduced.
+
+This follows [Chrome's extension cookie handling](https://developer.chrome.com/docs/extensions/develop/concepts/storage-and-cookies). The exact authenticated-PDF behavior still needs user validation; persistent verification errors offer the corresponding paper-page link and manual fallback.

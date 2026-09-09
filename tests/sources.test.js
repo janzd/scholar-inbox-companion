@@ -54,6 +54,25 @@ test('public downloads omit credentials, refuse redirects and enforce streamed s
   await assert.rejects(fetchPublic('file:///paper.pdf'), /cannot be downloaded/);
 });
 
+test('only HTTPS OpenReview paper routes use the existing browser session', async () => {
+  for (const url of ['https://openreview.net/pdf?id=4vGVQVz5KG', 'https://openreview.net/forum?id=4vGVQVz5KG', 'https://www.openreview.net/pdf?id=abc']) {
+    await fetchPublic(url, {fetchFn: async (_, options) => {
+      assert.equal(options.credentials, 'include'); assert.equal(options.redirect, 'error');
+      assert.equal(options.headers, undefined, 'Chrome attaches cookies; code does not read or copy them');
+      return new Response('PDF bytes');
+    }});
+  }
+  for (const url of ['http://openreview.net/pdf?id=abc', 'https://openreview.net.evil.test/pdf?id=abc', 'https://api2.openreview.net/notes?id=abc', 'https://openreview.net/settings', 'https://openreview.net:8443/pdf?id=abc', 'https://openreview.net/pdf', 'https://example.org/paper.pdf']) {
+    await fetchPublic(url, {fetchFn: async (_, options) => { assert.equal(options.credentials, 'omit', url); return new Response('test'); }});
+  }
+});
+
+test('OpenReview verification errors give a specific recovery action', async () => {
+  await assert.rejects(fetchPublic('https://openreview.net/pdf?id=4vGVQVz5KG', {
+    fetchFn: async () => new Response('Verification required', {status: 403})
+  }), /OpenReview requires browser verification or sign-in/);
+});
+
 test('PDF title heuristic joins large title lines and ignores body text and watermarks', () => {
   const item = (str, size, x, y, rotate = 0) => ({str, height: size, transform: [size, rotate, 0, size, x, y]});
   const items = [item('A Useful Paper', 20, 50, 700), item('About Learning', 20, 50, 675), item('Author Names', 12, 50, 640), item('arXiv watermark', 22, 10, 700, 22), item('Body heading', 20, 50, 180)];

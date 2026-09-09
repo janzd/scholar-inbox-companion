@@ -60,13 +60,20 @@ export function paperMetadata(raw, plan) {
 export async function fetchPublic(url, {maxBytes = 25 * 1024 * 1024, fetchFn = globalThis.fetch.bind(globalThis)} = {}) {
   const parsed = new URL(url);
   if (!["https:", "http:"].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error("This page cannot be downloaded. Enter the title below.");
+  // OpenReview gates even public PDFs behind a browser verification cookie.
+  // Let Chrome attach its existing session only to these HTTPS paper routes;
+  // never inspect cookies, broaden host access, or follow a redirect with them.
+  const openReviewPaper = parsed.protocol === "https:" &&
+    ["openreview.net", "www.openreview.net"].includes(parsed.hostname) && !parsed.port &&
+    ["/forum", "/pdf"].includes(parsed.pathname) && /^[A-Za-z0-9_-]{1,100}$/.test(parsed.searchParams.get("id") || "");
   // The activeTab grant covers this origin. Redirects may leave that grant, so
   // ask the user to open the final URL instead of following them implicitly.
   let response;
-  try { response = await fetchFn(url, {credentials: "omit", redirect: "error", signal: AbortSignal.timeout(20000)}); }
+  try { response = await fetchFn(url, {credentials: openReviewPaper ? "include" : "omit", redirect: "error", signal: AbortSignal.timeout(20000)}); }
   catch {
     throw new Error("Could not download this page or PDF. It may require sign-in, a browser check, or opening the final URL after a redirect. Enter the title, or choose a downloaded PDF.");
   }
+  if (openReviewPaper && [401, 403].includes(response.status)) throw new Error("OpenReview requires browser verification or sign-in. Open the paper page below in Chrome, complete any check, then retry. You can also enter the title or choose a downloaded PDF.");
   if (!response.ok) throw new Error(`The site returned ${response.status}. Enter the title, or choose a downloaded PDF below.`);
   if (Number(response.headers.get("Content-Length")) > maxBytes) throw new Error("This file is too large to read here (25 MB maximum for PDFs). Enter its title instead.");
   const reader = response.body?.getReader();

@@ -1,6 +1,6 @@
 # Multi-source saving validation
 
-Version 0.2.1, September 10, 2026. Related issue: [#2](https://github.com/janzd/scholar-inbox-companion/issues/2).
+Version 0.2.2, September 10, 2026. Related issue: [#2](https://github.com/janzd/scholar-inbox-companion/issues/2).
 
 ## Completed checks
 
@@ -11,20 +11,18 @@ Version 0.2.1, September 10, 2026. Related issue: [#2](https://github.com/janzd/
 - PDF popup tests confirm automatic search after extraction, manual fallback for empty titles, and actionable reload instructions for stale background workers.
 - Updated popup preview renders the paper title, Scholar Inbox link, collection picker, and editing action.
 
-## Checks still needed in the installed Chrome extension
+## User validation and the remaining OpenReview PDF check
 
-The existing arXiv save workflow was user-verified before this change. These new source paths have not yet been tested against the user's authenticated account in an installed version 0.2.1.
+The user reported successful tests on arXiv, OpenReview paper pages, CVF, and open PDFs in version 0.2.1. The exception was [this OpenReview PDF](https://openreview.net/pdf?id=4vGVQVz5KG), **Unsupervised Behavior Extraction via Random Intent Priors**: Chrome displayed it, while the extension returned HTTP 403.
 
-- Reload/load version 0.2.1 and confirm the new `scripting` permission is available.
-- Open a CVF paper page and its PDF; select the correct record and save to a chosen collection. Reopen from the other URL and check **Already saved**.
-- Open an OpenReview forum and its PDF in a browser where its verification check has completed. The representative [OpenReview page](https://openreview.net/forum?id=YicbFdNTTy) returned a verification screen during live inspection, so the rendered `h2.citation.title` selector is fixture-tested, not live-verified in this environment.
-- Try a generic public PDF, an extensionless PDF URL, and a downloaded PDF. Confirm the extracted title is searched automatically and a unique title match opens the collection picker. Correct inaccurate titles and choose among ambiguous records as needed.
-- Recheck a versioned arXiv URL and an expired Scholar Inbox session.
+Anonymous requests to that PDF reproduced the 403; the documented notes API also returned `ChallengeRequiredError` with “Challenge verification required.” The extension previously omitted all source cookies. Version 0.2.2 lets Chrome attach existing cookies only for HTTPS OpenReview paper/forum routes. This does not read cookie values or add host permissions. Other source requests continue to omit credentials, and all source redirects remain disallowed.
 
-Chrome's extension-management UI was blocked to browser automation earlier in this task. Loading/reloading the installed extension remains a manual step; the local web preview does not prove Chrome's temporary host grants or extension installation behavior.
+All 38 automated tests pass, including credential scoping, the OpenReview PDF fallback after a failed forum fetch, and the recovery link when verification still fails. Retrying the reported PDF in the installed extension with the user's existing browser session is still needed; no live success is claimed for this fix.
+
+Chrome's extension-management UI was blocked to browser automation earlier in this task. Reloading version 0.2.2 remains a manual step.
 
 ## Deliberate limitations
 
 A unique normalized title opens authenticated paper detail and the collection picker automatically. Title/author/year similarity ranks other candidates; duplicate or merely similar titles require selection. Exact arXiv IDs or DOI fields, when exposed by both sources, can select a unique record. Conflicting known identifiers exclude a result. PDF first-page identifiers are extracted as hints only: a referenced paper's identifier must not override a reviewed title.
 
-Downloads omit cookies, reject redirects, and are restricted by the existing arXiv permission or the clicked tab's temporary origin permission. Login-only, redirected, cross-origin, scanned, or otherwise unreadable files have a manual-title/downloaded-file fallback. No new broad host permissions, OCR, PDF upload, or record-import workflow is included.
+Downloads omit cookies except for the scoped OpenReview session use above, reject redirects, and are restricted by the existing arXiv permission or the clicked tab's temporary origin permission. Login-only, redirected, cross-origin, scanned, or otherwise unreadable files have a manual-title/downloaded-file fallback. No new broad host permissions, OCR, PDF upload, or record-import workflow is included.

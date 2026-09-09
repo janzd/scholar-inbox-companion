@@ -16,6 +16,7 @@ async function send(message) {
 
 function status(message, error = false) { $("status").textContent = message; $("status").classList.toggle("error", error); }
 function error(message) {
+  $("source-page").hidden = true;
   if (message === reloadMessage) {
     resetResults(); status(message, true);
     for (const id of ["retry", "manual", "pdf-tools"]) $(id).hidden = true;
@@ -24,6 +25,9 @@ function error(message) {
   status(message, true); $("retry").hidden = false;
   $("manual").hidden = false; $("search").disabled = false; $("pdf-tools").hidden = false;
   $("read-pdf").hidden = !plan.supported;
+  if (plan.landingUrl && plan.landingUrl !== plan.url) {
+    $("source-page").href = plan.landingUrl; $("source-page").hidden = false;
+  }
 }
 
 function renderCollections() {
@@ -68,6 +72,7 @@ function showPaper(data) {
 function resetResults() {
   currentPaper = null; selectedId = null;
   $("paper").hidden = true; $("candidates").hidden = true; $("edit-title").hidden = true;
+  $("source-page").hidden = true;
 }
 
 function manual(message, suggestion = "") {
