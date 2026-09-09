@@ -40,3 +40,7 @@ Implications:
 - Digest records could seed a local arXiv-ID-to-paper-ID index for papers already fetched, but do not provide complete arbitrary-paper coverage or the frontend slug used by the current extension.
 - MCP settings describe reading access and show a `get_digest(start_date, end_date, top_k)` example. An MCP connection and its full tool list were not tested or installed during this review.
 - Review only: the installed extension's behavior and authentication were not changed.
+
+## Live save verification — September 10, 2026
+
+The user confirmed that saving a paper to a Scholar Inbox collection through the installed extension works. This supplements the automated save tests and earlier live lookup and collection-loading checks. The specific paper, collection, and confirmation message were not recorded.

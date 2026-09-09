@@ -4,7 +4,7 @@ Save papers from arXiv directly to your [Scholar Inbox](https://www.scholar-inbo
 
 Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
-> **Early preview:** Paper lookup and collection loading have been verified with a signed-in account. Saving is implemented and covered by automated tests, but a real save and its confirmation have not yet been verified end to end.
+> **Early preview:** Paper lookup, collection loading, and saving to a collection have been verified in live use. See [limitations and troubleshooting](#limitations-and-troubleshooting) for current constraints.
 
 ## Features
 
