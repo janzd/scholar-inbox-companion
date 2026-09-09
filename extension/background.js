@@ -9,6 +9,8 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     switch (message?.type) {
       case "metadata": return {html: await client.arxivPage(message.arxivId)};
       case "lookup": return await client.lookup(message.arxivId, message.title);
+      case "resolve": return await client.resolve(message.metadata);
+      case "choose": return {paper: await client.choose(message.candidate)};
       case "save": {
         if (saving) throw new Error("A save is already in progress.");
         saving = true;

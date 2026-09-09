@@ -41,11 +41,31 @@ export function memberships(paper) {
   return paper.user_paper_collections;
 }
 
-export function paperView(paper, arxivId) {
-  if (normalizeArxivId(paper.arxiv_id) !== arxivId) throw new Error("Paper ID mismatch. Nothing was saved.");
+export function normalizeTitle(value) {
+  return String(value ?? "").normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+export function normalizeDoi(value) {
+  const doi = String(value ?? "").trim().replace(/^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)/i, "");
+  return /^10\.\d{4,9}\/\S+$/i.test(doi) ? doi.toLowerCase() : null;
+}
+
+export function candidateView(paper) {
+  if (!Number.isSafeInteger(Number(paper.paper_id)) || Number(paper.paper_id) <= 0 || !normalizeTitle(paper.title)) throw new Error("Invalid Scholar Inbox paper identifier.");
+  return {paperId: Number(paper.paper_id), slug: slugFromPaper(paper), title: String(paper.title),
+    authors: String(paper.authors ?? ""), arxivId: normalizeArxivId(paper.arxiv_id), doi: normalizeDoi(paper.doi),
+    year: String(paper.publication_date ?? "").match(/\b(?:19|20)\d{2}\b/)?.[0] ?? ""};
+}
+
+export function paperView(paper, expected) {
+  const identity = typeof expected === "string" ? {arxivId: expected} : expected;
+  if (!identity || (identity.arxivId && normalizeArxivId(paper.arxiv_id) !== identity.arxivId) ||
+      (identity.doi && normalizeDoi(paper.doi) !== identity.doi)) throw new Error("Paper ID mismatch. Nothing was saved.");
+  if (identity.paperId !== undefined && Number(paper.paper_id) !== identity.paperId) throw new Error("The paper record changed. Nothing was saved; reopen the extension.");
+  if (identity.title !== undefined && normalizeTitle(paper.title) !== normalizeTitle(identity.title)) throw new Error("The paper title changed. Nothing was saved; search again.");
   if (!Number.isSafeInteger(Number(paper.paper_id)) || Number(paper.paper_id) <= 0) throw new Error("Invalid Scholar Inbox paper identifier.");
   return {
-    paperId: Number(paper.paper_id), arxivId, slug: slugFromPaper(paper),
+    ...candidateView(paper),
     title: String(paper.title ?? ""), authors: String(paper.authors ?? ""),
     abstract: String(paper.abstract ?? ""),
     collectionIds: memberships(paper).map(c => String(c.id))
@@ -97,7 +117,7 @@ export class ScholarClient {
     if (normalizeArxivId(id) !== id) throw new Error("Invalid arXiv identifier.");
     let response;
     try {
-      response = await this.fetch(`https://arxiv.org/abs/${id}`, {credentials: "omit", signal: AbortSignal.timeout(18000)});
+      response = await this.fetch(`https://arxiv.org/abs/${id}`, {credentials: "omit", redirect: "error", signal: AbortSignal.timeout(18000)});
     } catch { throw new Error("Could not load the arXiv abstract page. You can enter the paper title below."); }
     if (!response.ok) throw new Error("arXiv could not provide the abstract page. You can enter the paper title below.");
     const html = await response.text();
@@ -133,10 +153,54 @@ export class ScholarClient {
     return {paper: current, collections};
   }
 
-  async save({slug, arxivId, paperId, collectionId}) {
-    if (normalizeArxivId(arxivId) !== arxivId || typeof collectionId !== "string") throw new Error("Invalid save request.");
+  async resolve({title, arxivId, doi, authors = [], year = ""}) {
+    if (typeof title !== "string" || !normalizeTitle(title) || title.length > 1000) throw new Error("Enter the paper’s title to search.");
+    arxivId = normalizeArxivId(arxivId); doi = normalizeDoi(doi);
     await this.session();
-    const paper = await this.detail(slug, arxivId);
+    const paperTask = (async () => {
+      const data = await this.request("/search", {mode: "text", q: title.trim(), p: 0, n_results: 20,
+        searchIn: ["title"], show: ["all"], orderBy: "query match", correct_search_prompt: false, include: ["papers"]});
+      const rows = Array.isArray(data.digest_df) ? data.digest_df : [];
+      const candidates = [...new Map(rows.flatMap(row => {
+        try { const c = candidateView(row); return [[c.paperId, c]]; } catch { return []; }
+      })).values()].filter(c => !(arxivId && c.arxivId && arxivId !== c.arxivId) && !(doi && c.doi && doi !== c.doi));
+      const sourceAuthors = (Array.isArray(authors) ? authors : [authors]).map(normalizeTitle).filter(Boolean);
+      const score = c => {
+        const name = normalizeTitle(c.title), query = normalizeTitle(title);
+        const tokens = new Set(query.split(" "));
+        const overlap = name.split(" ").filter(t => tokens.has(t)).length / Math.max(1, name.split(" ").length);
+        const authorText = new Set(normalizeTitle(c.authors).split(" "));
+        const authorOverlap = sourceAuthors.some(author => author.split(" ").every(token => authorText.has(token)));
+        return (name === query ? 10 : overlap * 4) + (authorOverlap ? 2 : 0) + (year && c.year === String(year) ? 1 : 0);
+      };
+      candidates.sort((a, b) => score(b) - score(a));
+      const exact = candidates.filter(c => (arxivId && c.arxivId === arxivId) || (doi && c.doi === doi));
+      if (exact.length === 1) return {paper: await this.detail(exact[0].slug, exact[0]), match: "exact"};
+      const sameTitle = candidates.filter(c => normalizeTitle(c.title) === normalizeTitle(title));
+      // A unique normalized title can open the picker; saving is still a
+      // deliberate action after the title/authors and record link are shown.
+      if (!exact.length && sameTitle.length === 1) {
+        return {paper: await this.detail(sameTitle[0].slug, sameTitle[0]), match: "title"};
+      }
+      // Similar titles and duplicate records still require a deliberate choice.
+      return {candidates: exact.length ? exact : candidates};
+    })();
+    const [result, collections] = await Promise.all([paperTask, this.collections()]);
+    return {...result, collections};
+  }
+
+  async choose(candidate) {
+    if (!Number.isSafeInteger(candidate?.paperId) || !normalizeTitle(candidate?.title)) throw new Error("Choose a paper from the search results.");
+    await this.session();
+    return this.detail(candidate.slug, candidate);
+  }
+
+  async save({slug, arxivId, doi, title, paperId, collectionId}) {
+    if ((arxivId ? normalizeArxivId(arxivId) !== arxivId : !normalizeTitle(title)) ||
+        !Number.isSafeInteger(paperId) || paperId <= 0 || typeof collectionId !== "string" || !collectionId) throw new Error("Invalid save request.");
+    const identity = {arxivId, doi, title, paperId};
+    await this.session();
+    const paper = await this.detail(slug, identity);
     if (paper.paperId !== paperId) throw new Error("The paper record changed. Nothing was saved; reopen the extension.");
     const collection = (await this.collections()).find(c => c.id === collectionId);
     if (!collection || !collection.writable) throw new Error("This collection is unavailable or read-only. Nothing was saved.");
@@ -152,7 +216,7 @@ export class ScholarClient {
     }
     if (result.success !== true) return {state: "unconfirmed", collectionName: collection.name};
     try {
-      const updated = await this.detail(slug, arxivId);
+      const updated = await this.detail(slug, identity);
       if (updated.collectionIds.includes(collectionId)) return {state: "saved", collectionName: collection.name};
     } catch { /* A write may have succeeded despite a read-back failure. */ }
     return {state: "unconfirmed", collectionName: collection.name};

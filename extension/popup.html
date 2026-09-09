@@ -2,12 +2,12 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scholar Inbox Companion</title><link rel="stylesheet" href="popup.css"></head>
 <body>
-  <header><div class="brand-icon" aria-hidden="true">S</div><div><strong>Scholar Inbox Companion</strong><span>From your browser to your collection</span></div><span class="version">0.1.2</span></header>
+  <header><div class="brand-icon" aria-hidden="true">S</div><div><strong>Scholar Inbox Companion</strong><span>From your browser to your collection</span></div><span class="version">0.2.2</span></header>
   <main>
     <div id="preview-note" class="preview-note" hidden>Design preview · example collections · no account changes</div>
     <p id="status" role="status" aria-live="polite">Finding the paper in this tab…</p>
     <section id="paper" hidden>
-      <div class="eyebrow"><span id="arxiv-id"></span><span class="match">✓ Exact ID match</span></div>
+      <div class="eyebrow"><span id="source-label"></span><span id="match-label" class="match"></span></div>
       <h1 id="paper-title"></h1><p id="authors"></p>
       <div class="paper-links"><a id="scholar-link" target="_blank" rel="noopener noreferrer">Scholar Inbox ↗</a></div>
       <div class="section-heading"><h2>Save to a collection</h2><span id="collection-count"></span></div>
@@ -17,8 +17,12 @@
       <button id="save" class="primary" disabled>Choose a collection</button>
       <p id="result" role="status" aria-live="polite" hidden></p>
     </section>
-    <section id="manual" hidden><label for="manual-title">Paper title</label><textarea id="manual-title" rows="3" placeholder="Paste the title from arXiv"></textarea><button id="search" class="primary">Find exact paper</button></section>
+    <section id="candidates" hidden><h2>Choose the matching paper</h2><p class="help">Check the title and authors before continuing.</p><div id="candidate-list"></div></section>
+    <section id="manual" hidden><label for="manual-title">Paper title</label><textarea id="manual-title" rows="3" maxlength="1000" placeholder="Enter or paste the paper title"></textarea><button id="search" class="primary">Search Scholar Inbox</button></section>
+    <button id="edit-title" class="secondary" hidden>Edit title / Search again</button>
+    <section id="pdf-tools" hidden><button id="read-pdf" class="secondary">Read this tab as a PDF</button><label class="file-label" for="pdf-file">Or choose a downloaded PDF (up to 25 MB)</label><input id="pdf-file" type="file" accept="application/pdf,.pdf"><p class="help">PDFs are read locally. Only the title you search is sent to Scholar Inbox.</p></section>
     <button id="retry" class="secondary" hidden>Retry</button>
+    <a id="source-page" class="source-page" target="_blank" rel="noopener noreferrer" hidden>Open paper page ↗</a>
   </main>
   <footer><a href="https://www.scholar-inbox.com/digest" target="_blank" rel="noopener noreferrer">Open Scholar Inbox ↗</a><span>Unofficial personal prototype</span></footer>
   <script type="module" src="popup.js"></script>

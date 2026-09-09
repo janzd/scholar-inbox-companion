@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Scholar Inbox Companion",
-  "version": "0.1.2",
-  "description": "Save the arXiv paper you are reading to an existing Scholar Inbox collection.",
+  "version": "0.2.2",
+  "description": "Save papers from arXiv, CVF, OpenReview and other paper pages or PDFs to your Scholar Inbox collections.",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "https://api.scholar-inbox.com/*",
