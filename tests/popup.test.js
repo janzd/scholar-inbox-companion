@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {parseHTML} from 'linkedom';
+import {parseHTML, DOMParser} from 'linkedom';
 import {samplePdf} from './helpers/pdf.js';
 import {readDocument} from '../extension/sources.js';
 
@@ -13,8 +13,8 @@ const collection = {id: '3', name: 'Vision', writable: true};
 async function popup(sendMessage, {url = "https://openaccess.thecvf.com/content/CVPR2024/html/example.html", pageHtml = '<div id="papertitle">Segment and Caption Anything</div>', fetchFn} = {}) {
   const {document, window} = parseHTML(html);
   const page = parseHTML(pageHtml).document;
-  const saved = Object.fromEntries(['document', 'location', 'chrome', 'fetch'].map(k => [k, globalThis[k]]));
-  Object.assign(globalThis, {document, location: {search: ''}, chrome: {
+  const saved = Object.fromEntries(['document', 'location', 'chrome', 'fetch', 'DOMParser'].map(k => [k, globalThis[k]]));
+  Object.assign(globalThis, {document, DOMParser, location: {search: ''}, chrome: {
     runtime: {id: 'test', sendMessage},
     tabs: {query: async () => [{id: 1, url}]},
     scripting: {executeScript: async ({func}) => { assert.equal(func.name, readDocument.name); return [{result: func(page)}]; }}
@@ -63,6 +63,33 @@ test('editing while a lookup is pending prevents stale results from replacing th
     assert.equal(env.document.getElementById('paper').hidden, true);
     assert.equal(env.document.getElementById('manual-title').value, 'A Different Paper');
     assert.equal(env.document.getElementById('search').disabled, false);
+  } finally { env.restore(); }
+});
+
+test('shows available metadata immediately, keeping unverified collections and links hidden', async () => {
+  let release;
+  const env = await popup(() => new Promise(resolve => { release = resolve; }));
+  try {
+    assert.equal(env.document.getElementById('paper').hidden, false);
+    assert.equal(env.document.getElementById('paper-title').textContent, candidate.title);
+    assert.equal(env.document.getElementById('collection-picker').hidden, true);
+    assert.equal(env.document.getElementById('scholar-link').hidden, true);
+    assert.equal(env.document.getElementById('edit-title').hidden, false);
+    release({ok: true, data: {paper: {...candidate, collectionIds: []}, collections: [collection], match: 'title'}});
+    await next(); assert.equal(env.document.getElementById('collection-picker').hidden, false);
+  } finally { env.restore(); }
+});
+
+test('arXiv pages use the open tab metadata without a redundant abstract download', async () => {
+  const messages = [];
+  const env = await popup(async message => {
+    messages.push(message);
+    return {ok: true, data: {paper: {...candidate, collectionIds: []}, collections: [collection], match: 'exact'}};
+  }, {url: 'https://arxiv.org/abs/2401.01234v2', pageHtml: '<meta name="citation_title" content="A Useful Paper">'});
+  try {
+    assert.deepEqual(messages.map(m => m.type), ['resolve']);
+    assert.equal(messages[0].metadata.arxivId, '2401.01234');
+    env.click('retry'); await next(); assert.equal(messages.at(-1).refresh, true);
   } finally { env.restore(); }
 });
 
@@ -123,6 +150,7 @@ test('OpenReview PDF uses the existing session when its forum page cannot supply
   const downloads = [], messages = [];
   const env = await popup(async message => {
     messages.push(message);
+    if (message.type === 'landingPage') return {ok: false, error: 'OpenReview requires browser verification or sign-in.'};
     return {ok: true, data: {paper: {...candidate, title: message.metadata.title, collectionIds: []}, collections: [collection], match: 'title'}};
   }, {url: 'https://openreview.net/pdf?id=4vGVQVz5KG', pageHtml: '', fetchFn: async (url, options) => {
     downloads.push(url);
@@ -131,15 +159,19 @@ test('OpenReview PDF uses the existing session when its forum page cannot supply
   }});
   try {
     await until(() => !env.document.getElementById('paper').hidden);
-    assert.deepEqual(downloads, ['https://openreview.net/forum?id=4vGVQVz5KG', 'https://openreview.net/pdf?id=4vGVQVz5KG']);
-    assert.equal(messages.length, 1); assert.equal(messages[0].metadata.title, 'A Useful Paper About Learning');
+    assert.deepEqual(downloads, ['https://openreview.net/pdf?id=4vGVQVz5KG']);
+    assert.deepEqual(messages.map(m => m.type), ['landingPage', 'resolve']);
+    assert.equal(messages[1].metadata.title, 'A Useful Paper About Learning');
     assert.equal(env.document.getElementById('source-page').hidden, true);
   } finally { env.restore(); }
 });
 
 test('persistent OpenReview verification offers the exact forum link and does not search', async () => {
   let queries = 0;
-  const env = await popup(async () => { queries++; }, {
+  const env = await popup(async message => {
+    if (message.type === 'landingPage') return {ok: false, error: 'OpenReview requires browser verification or sign-in.'};
+    queries++;
+  }, {
     url: 'https://openreview.net/pdf?id=4vGVQVz5KG', pageHtml: '', fetchFn: async () => new Response('Verification required', {status: 403})
   });
   try {
@@ -147,4 +179,23 @@ test('persistent OpenReview verification offers the exact forum link and does no
     assert.equal(env.document.getElementById('source-page').href, 'https://openreview.net/forum?id=4vGVQVz5KG');
     assert.equal(queries, 0); assert.equal(env.document.getElementById('manual').hidden, false);
   } finally { env.restore(); }
+});
+
+test('known PDFs get landing metadata through the worker and automatically show the matched paper', async () => {
+  for (const url of ['https://openreview.net/pdf?id=4vGVQVz5KG', 'https://openaccess.thecvf.com/content/CVPR2024/papers/Example.pdf']) {
+    const messages = [], downloads = [];
+    const env = await popup(async message => {
+      messages.push(message);
+      if (message.type === 'landingPage') return {ok: true, data: {html: '<html><head><link rel="preload" as="style" href="https://openreview.net/style.css"><meta name="citation_title" content="Segment and Caption Anything"></head></html>'}};
+      return {ok: true, data: {paper: {...candidate, collectionIds: []}, collections: [collection], match: 'title'}};
+    }, {url, pageHtml: '', fetchFn: async value => { downloads.push(value); throw new Error('Unexpected popup download'); }});
+    try {
+      assert.deepEqual(messages.map(m => m.type), ['landingPage', 'resolve']);
+      assert.equal(messages[0].url, url);
+      assert.equal(messages[1].metadata.title, candidate.title);
+      assert.deepEqual(downloads, []);
+      assert.equal(env.document.getElementById('collection-picker').hidden, false);
+      assert.equal(env.document.getElementById('paper-title').textContent, candidate.title);
+    } finally { env.restore(); }
+  }
 });

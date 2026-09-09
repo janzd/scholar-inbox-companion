@@ -6,7 +6,7 @@
 *.key
 
 # Dependencies and generated files
-node_modules/
+node_modules
 coverage/
 dist/
 *.zip

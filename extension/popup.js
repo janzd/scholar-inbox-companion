@@ -1,9 +1,11 @@
+import {metadataReady, popupReady, timingMode} from "./timing.js";
 import {SITE} from "./core.js";
 import {sourcePlan, readDocument, paperMetadata, fetchPublic} from "./sources.js";
 import {readPdf, MAX_PDF_BYTES} from "./pdf.js";
 const $ = id => document.getElementById(id);
 let currentPaper = null, collections = [], selectedId = null, busy = false;
 let metadata = {}, plan = {}, generation = 0;
+let baseline = false;
 const preview = !globalThis.chrome?.runtime?.id && new URLSearchParams(location.search).has("preview");
 const reloadMessage = "The extension’s background worker needs reloading. Open chrome://extensions, click Reload on Scholar Inbox Companion, then reopen this popup.";
 
@@ -16,6 +18,8 @@ async function send(message) {
 
 function status(message, error = false) { $("status").textContent = message; $("status").classList.toggle("error", error); }
 function error(message) {
+  resetResults();
+  popupReady({state: "error", source: plan.label});
   $("source-page").hidden = true;
   if (message === reloadMessage) {
     resetResults(); status(message, true);
@@ -64,15 +68,18 @@ function showPaper(data) {
   $("source-label").textContent = currentPaper.arxivId ? `arXiv · ${currentPaper.arxivId}` : (plan.label || "Paper");
   $("match-label").textContent = data.match === "exact" ? "✓ Exact ID match" : data.match === "title" ? "✓ Title match" : "✓ Selected by you";
   $("scholar-link").href = `${SITE}/paper/${encodeURIComponent(currentPaper.slug)}`;
+  $("collection-picker").hidden = false; $("scholar-link").hidden = false;
   $("paper").hidden = false; $("manual").hidden = true; $("retry").hidden = true;
   $("candidates").hidden = true; $("pdf-tools").hidden = true; $("edit-title").hidden = false;
   $("result").hidden = true; $("filter").value = ""; status(""); renderCollections(); updateButton();
+  metadataReady();
+  popupReady({state: "paper", source: plan.label, cacheHit: data.cacheHit});
 }
 
 function resetResults() {
   currentPaper = null; selectedId = null;
   $("paper").hidden = true; $("candidates").hidden = true; $("edit-title").hidden = true;
-  $("source-page").hidden = true;
+  $("source-page").hidden = true; $("collection-picker").hidden = true;
 }
 
 function manual(message, suggestion = "") {
@@ -82,6 +89,8 @@ function manual(message, suggestion = "") {
 }
 
 function showCandidates(data, ticket) {
+  $("paper").hidden = true;
+  popupReady({state: "candidates", source: plan.label, cacheHit: data.cacheHit});
   collections = data.collections;
   const list = $("candidate-list"); list.replaceChildren();
   $("manual").hidden = false; $("search").disabled = false;
@@ -108,66 +117,88 @@ function showCandidates(data, ticket) {
   }
 }
 
-async function lookup(title) {
+function showPending(title) {
+  $("paper-title").textContent = title;
+  $("authors").textContent = Array.isArray(metadata.authors) ? metadata.authors.join(", ") : (metadata.authors || "");
+  $("source-label").textContent = plan.label || "Paper";
+  $("match-label").textContent = "Finding match…";
+  $("paper").hidden = false; $("collection-picker").hidden = true; $("scholar-link").hidden = true;
+  $("manual").hidden = true; $("edit-title").hidden = false;
+  metadataReady();
+}
+
+async function lookup(title, {refresh = false} = {}) {
   if (busy) return;
   if (preview) { status("Design preview only. No search was sent."); return; }
   const ticket = ++generation; resetResults();
+  if (!baseline) showPending(title);
   $("search").disabled = true; $("retry").hidden = true; $("pdf-tools").hidden = true;
   status("Finding this paper in Scholar Inbox…");
   try {
-    const data = await send({type: "resolve", metadata: {...metadata, title}});
+    const data = await send({type: "resolve", metadata: {...metadata, title}, refresh, baseline});
     if (ticket !== generation) return;
     if (data.paper) showPaper(data); else showCandidates(data, ticket);
   } catch (e) { if (ticket === generation) error(e.message); }
 }
 
-async function suggestPdf(bytes, ticket) {
+async function suggestPdf(bytes, ticket, {refresh = false} = {}) {
   const result = await readPdf(bytes);
   if (ticket !== generation) return;
   metadata = {...metadata, authors: result.authors ? [result.authors] : []};
   if (result.title?.trim()) {
     $("manual-title").value = result.title;
-    await lookup(result.title);
+    await lookup(result.title, {refresh});
   } else {
     manual("This PDF has no readable title. Paste the title below (scanned PDFs need manual entry).");
   }
 }
 
-async function start() {
+async function start({refresh = false} = {}) {
   if (busy) return;
   const ticket = ++generation; metadata = {}; plan = {}; resetResults();
   $("manual-title").value = "";
   for (const id of ["manual", "retry", "pdf-tools"]) $(id).hidden = true;
   status("Finding the paper in this tab…");
   try {
+    try {
+      baseline = (await chrome.storage?.session?.get('popupBenchmarkMode'))?.popupBenchmarkMode === 'baseline';
+    } catch { baseline = false; }
+    timingMode(baseline ? 'baseline' : 'optimized');
+    if (baseline) {
+      $("preview-note").textContent = "Timing comparison: baseline loading. Restore optimized mode on the timing page.";
+      $("preview-note").hidden = false;
+    }
     const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
     if (ticket !== generation) return;
     plan = sourcePlan(tab?.url);
     if (!plan.supported) { manual("Enter a paper title, or choose a downloaded PDF."); return; }
     metadata = {arxivId: plan.arxivId};
     let raw = {};
-    if (plan.arxivId) {
+    // Reading the open page is cheaper than downloading it again, including
+    // arXiv abstract/HTML pages. The built-in PDF viewer may reject injection.
+    if (!(baseline && plan.arxivId)) try {
+      const results = await chrome.scripting.executeScript({target: {tabId: tab.id}, func: readDocument});
+      raw = results[0]?.result || {};
+    } catch { /* Use the source-specific fallback below. */ }
+    if (ticket !== generation) return;
+    if (plan.arxivId && !raw.title) {
       const {html} = await send({type: "metadata", arxivId: plan.arxivId});
       raw = readDocument(new DOMParser().parseFromString(html, "text/html"));
     } else {
-      try {
-        const results = await chrome.scripting.executeScript({target: {tabId: tab.id}, func: readDocument});
-        raw = results[0]?.result || {};
-      } catch { /* Chrome's PDF viewer and restricted pages cannot be injected. */ }
       if (!raw.title && plan.landingUrl && plan.landingUrl !== plan.url) {
         try {
           status("Reading the paper’s landing page…");
-          const bytes = await fetchPublic(plan.landingUrl, {maxBytes: 2 * 1024 * 1024});
-          raw = readDocument(new DOMParser().parseFromString(new TextDecoder().decode(bytes), "text/html"));
+          const {html} = await send({type: "landingPage", url: plan.url});
+          raw = readDocument(new DOMParser().parseFromString(html, "text/html"));
         } catch { /* Fall back to the open PDF or an editable title. */ }
       }
     }
     if (ticket !== generation) return;
     metadata = paperMetadata(raw, plan);
-    if (metadata.title) { $("manual-title").value = metadata.title; await lookup(metadata.title); return; }
+    if (metadata.title) { $("manual-title").value = metadata.title; await lookup(metadata.title, {refresh}); return; }
     if (plan.isPdf || raw.contentType === "application/pdf") {
       status("Reading the PDF title locally…");
-      await suggestPdf(await fetchPublic(plan.url), ticket);
+      await suggestPdf(await fetchPublic(plan.url), ticket, {refresh});
       return;
     }
     manual("No paper citation found. Enter or check the title before searching.", metadata.suggestedTitle);
@@ -197,13 +228,14 @@ $("pdf-file").addEventListener("change", async event => {
 });
 
 $("filter").addEventListener("input", () => {
+  if (!currentPaper) return;
   selectedId = null; renderCollections(); updateButton();
 });
 $("manual-title").addEventListener("input", () => {
   ++generation; resetResults(); $("search").disabled = false; status("Search with the edited title when ready.");
 });
-$("retry").addEventListener("click", start);
-$("search").addEventListener("click", () => lookup($("manual-title").value.trim()));
+$("retry").addEventListener("click", () => start({refresh: true}));
+$("search").addEventListener("click", () => lookup($("manual-title").value.trim(), {refresh: true}));
 $("save").addEventListener("click", async () => {
   if (!currentPaper || !selectedId || busy) return;
   if (preview) { $("result").textContent = "Design preview only. No paper was saved."; $("result").hidden = false; return; }
@@ -229,7 +261,10 @@ if (preview) {
   $("preview-note").hidden = false;
   const sample = {match: "exact", paper: {paperId: 4842939, arxivId: "2609.04649", slug: "Mahajan2026ARXIV_ReaDiT_Guidance_Control_for", title: "ReaDiT Guidance: Control for Image and Video Generation using Diffusion Transformer Features", authors: "Jay Mahajan, Chang Liu, Rauf Makharov, Viraj Shah, Alexander Schwing, Svetlana Lazebnik", collectionIds: ["sample-3"]}, collections: ["Data Augmentation", "Decomposition", "Diffusion Models", "Image Editing", "Segmentation"].map((name,i) => ({id:`sample-${i}`,name,writable:true}))};
   const view = new URLSearchParams(location.search).get("view");
-  if (view === "candidates") {
+  if (view === "loading") {
+    plan = {label: "arXiv"}; metadata = {authors: sample.paper.authors};
+    showPending(sample.paper.title); status("Finding this paper in Scholar Inbox…");
+  } else if (view === "candidates") {
     metadata = {}; $("manual-title").value = "Segment and Caption Anything";
     showCandidates({collections: sample.collections, candidates: [{paperId: 42, slug: "sample", title: "Segment and Caption Anything", authors: "Xiaoke Huang, Jianfeng Wang", year: "2024"}]}, generation);
   } else if (view === "manual") { manual("Review the title extracted from the PDF, then search.", "Segment and Caption Anything"); }

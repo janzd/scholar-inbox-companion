@@ -1,3 +1,4 @@
+import {LookupCache, lookupKey} from "./cache.js";
 export const API = "https://api.scholar-inbox.com/api";
 export const SITE = "https://www.scholar-inbox.com";
 
@@ -60,9 +61,9 @@ export function candidateView(paper) {
 export function paperView(paper, expected) {
   const identity = typeof expected === "string" ? {arxivId: expected} : expected;
   if (!identity || (identity.arxivId && normalizeArxivId(paper.arxiv_id) !== identity.arxivId) ||
-      (identity.doi && normalizeDoi(paper.doi) !== identity.doi)) throw new Error("Paper ID mismatch. Nothing was saved.");
-  if (identity.paperId !== undefined && Number(paper.paper_id) !== identity.paperId) throw new Error("The paper record changed. Nothing was saved; reopen the extension.");
-  if (identity.title !== undefined && normalizeTitle(paper.title) !== normalizeTitle(identity.title)) throw new Error("The paper title changed. Nothing was saved; search again.");
+      (identity.doi && normalizeDoi(paper.doi) !== identity.doi)) throw Object.assign(new Error("Paper ID mismatch. Nothing was saved."), {code: "IDENTITY_CHANGED"});
+  if (identity.paperId !== undefined && Number(paper.paper_id) !== identity.paperId) throw Object.assign(new Error("The paper record changed. Nothing was saved; reopen the extension."), {code: "IDENTITY_CHANGED"});
+  if (identity.title !== undefined && normalizeTitle(paper.title) !== normalizeTitle(identity.title)) throw Object.assign(new Error("The paper title changed. Nothing was saved; search again."), {code: "IDENTITY_CHANGED"});
   if (!Number.isSafeInteger(Number(paper.paper_id)) || Number(paper.paper_id) <= 0) throw new Error("Invalid Scholar Inbox paper identifier.");
   return {
     ...candidateView(paper),
@@ -73,7 +74,7 @@ export function paperView(paper, expected) {
 }
 
 export class ScholarClient {
-  constructor(fetchFn = globalThis.fetch.bind(globalThis)) { this.fetch = fetchFn; }
+  constructor(fetchFn = globalThis.fetch.bind(globalThis), {cache = new LookupCache()} = {}) { this.fetch = fetchFn; this.cache = cache; }
 
   async request(path, body) {
     let response;
@@ -93,7 +94,7 @@ export class ScholarClient {
       const seconds = Number(response.headers.get("Retry-After"));
       throw new Error(`Scholar Inbox is limiting requests. ${Number.isFinite(seconds) && seconds > 0 ? `Try again in ${seconds} seconds.` : "Wait before trying again."}`);
     }
-    if (!response.ok) throw new Error(`Scholar Inbox returned an error (${response.status}). Please try again later.`);
+    if (!response.ok) throw Object.assign(new Error(`Scholar Inbox returned an error (${response.status}). Please try again later.`), {status: response.status});
     let data;
     try { data = await response.json(); } catch { throw new Error("Scholar Inbox returned an unexpected response."); }
     if (data.success === false) throw new Error("Scholar Inbox could not complete this request. Please check your sign-in and try again.");
@@ -153,11 +154,18 @@ export class ScholarClient {
     return {paper: current, collections};
   }
 
-  async resolve({title, arxivId, doi, authors = [], year = ""}) {
+  async resolve({title, arxivId, doi, authors = [], year = ""}, {refresh = false, parallel = true} = {}) {
     if (typeof title !== "string" || !normalizeTitle(title) || title.length > 1000) throw new Error("Enter the paper’s title to search.");
     arxivId = normalizeArxivId(arxivId); doi = normalizeDoi(doi);
-    await this.session();
-    const paperTask = (async () => {
+    // All three are read-only and independent. Account data is returned only
+    // after the current sign-in check and both data requests have succeeded.
+    const authentication = this.session();
+    const contextTask = (async () => {
+      if (!parallel) await authentication;
+      return Promise.all([authentication, this.collections()]);
+    })();
+    let key, cacheHit = false;
+    const search = async () => {
       const data = await this.request("/search", {mode: "text", q: title.trim(), p: 0, n_results: 20,
         searchIn: ["title"], show: ["all"], orderBy: "query match", correct_search_prompt: false, include: ["papers"]});
       const rows = Array.isArray(data.digest_df) ? data.digest_df : [];
@@ -184,9 +192,41 @@ export class ScholarClient {
       }
       // Similar titles and duplicate records still require a deliberate choice.
       return {candidates: exact.length ? exact : candidates};
+    };
+    const paperTask = (async () => {
+      if (!parallel) await authentication;
+      key = await lookupKey([normalizeTitle(title), arxivId, doi, authors, year]);
+      if (refresh) await this.cache.delete(key);
+      const cached = refresh ? null : await this.cache.get(key);
+      if (cached?.identity && ['exact', 'title'].includes(cached.match)) {
+        const {titleHash, ...identity} = cached.identity;
+        if (Number.isSafeInteger(identity.paperId) && identity.paperId > 0 && /^[a-zA-Z0-9_.-]+$/.test(identity.slug) && /^[a-f0-9]{64}$/.test(titleHash)) {
+          try {
+            const paper = await this.detail(identity.slug, identity);
+            if (await lookupKey(normalizeTitle(paper.title)) !== titleHash) throw Object.assign(new Error('Cached paper title changed.'), {code: 'IDENTITY_CHANGED'});
+            cacheHit = true;
+            return {paper, match: cached.match};
+          } catch (error) {
+            await this.cache.delete(key);
+            // A replaced/removed record can be resolved again once. Network,
+            // authentication, and membership errors must not trigger retries.
+            if (error.status !== 404 && error.code !== 'IDENTITY_CHANGED') throw error;
+          }
+        }
+      }
+      return search();
     })();
-    const [result, collections] = await Promise.all([paperTask, this.collections()]);
-    return {...result, collections};
+    try {
+      const [result, [, collections]] = await Promise.all([paperTask, contextTask]);
+      if (result.paper && !cacheHit) {
+        const {paperId, slug, arxivId, doi, title} = result.paper;
+        await this.cache.set(key, {identity: {paperId, slug, arxivId, doi, titleHash: await lookupKey(normalizeTitle(title))}, match: result.match});
+      }
+      return {...result, collections, cacheHit};
+    } catch (error) {
+      await this.cache.clear();
+      throw error;
+    }
   }
 
   async choose(candidate) {
@@ -201,7 +241,7 @@ export class ScholarClient {
     const identity = {arxivId, doi, title, paperId};
     await this.session();
     const paper = await this.detail(slug, identity);
-    if (paper.paperId !== paperId) throw new Error("The paper record changed. Nothing was saved; reopen the extension.");
+    if (paper.paperId !== paperId) throw Object.assign(new Error("The paper record changed. Nothing was saved; reopen the extension."), {code: "IDENTITY_CHANGED"});
     const collection = (await this.collections()).find(c => c.id === collectionId);
     if (!collection || !collection.writable) throw new Error("This collection is unavailable or read-only. Nothing was saved.");
     if (paper.collectionIds.includes(collectionId)) return {state: "already_saved", collectionName: collection.name};

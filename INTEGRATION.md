@@ -58,3 +58,15 @@ Source metadata and PDFs are processed locally. Only the extracted/entered title
 The reported PDF (`4vGVQVz5KG`) returned HTTP 403 anonymously, and its documented notes API returned `ChallengeRequiredError`. Source requests to HTTPS `openreview.net` / `www.openreview.net`, on `/forum` or `/pdf` with a valid note ID, now use `credentials: "include"` so Chrome can attach an existing verification/session cookie. Other source requests retain `credentials: "omit"`; redirects remain rejected. No cookie values are read and no API token or new host permission is introduced.
 
 This follows [Chrome's extension cookie handling](https://developer.chrome.com/docs/extensions/develop/concepts/storage-and-cookies). The user confirmed the previously failing PDF works with version 0.2.2. Persistent verification errors still offer the corresponding paper-page link and manual fallback.
+
+## Popup loading — version 0.3.0
+
+Resolve overlaps the sign-in check and collection fetch with paper lookup, returning account data only after all required reads succeed. A browser-session cache stores only the record mapping (IDs/slug, match type, and hashes of the query inputs and title), bounded to five minutes and 100 records. A hit still fetches fresh authenticated detail and current collections. Collections, memberships, permissions, and session responses are never cached. Save validation and write/read-back behavior are unchanged.
+
+The bundled timing page can configure a baseline/optimized loading mode and clear the lookup cache. Its sender can invoke only that diagnostic operation; paper operations remain restricted to the popup. Session timing records contain durations, source category, version, result state and cache-hit status, with no titles, URLs, paper IDs, or account data. See [the comparison procedure](measurements/popup-loading.md) for the measurement boundary.
+
+## Publisher preload warnings — version 0.3.1
+
+The user reported an unused OpenReview CSS preload warning attributed to `popup.html`. A local Chrome reproduction isolated HTTP `Link: <...>; rel=preload; as=style` response headers: fetching the response from a document downloaded the stylesheet, whereas fetching the same response in a service worker did not. Parsing an HTML preload tag with the existing detached DOMParser did not download it in that reproduction.
+
+Derived OpenReview and CVF landing-page downloads now run in the extension background worker. The popup still parses the returned HTML and automatically searches the extracted title. The worker accepts only source-plan-derived alternate pages on these supported hosts, retaining the existing size limit, redirect rejection and scoped OpenReview credentials. No new permissions are required. Automated tests cover routing, automatic matching, unsupported URLs and verification/PDF fallbacks; live installed-extension confirmation remains pending.
