@@ -11,15 +11,15 @@ Version 0.2.2, September 10, 2026. Related issue: [#2](https://github.com/janzd/
 - PDF popup tests confirm automatic search after extraction, manual fallback for empty titles, and actionable reload instructions for stale background workers.
 - Updated popup preview renders the paper title, Scholar Inbox link, collection picker, and editing action.
 
-## User validation and the remaining OpenReview PDF check
+## User validation
 
 The user reported successful tests on arXiv, OpenReview paper pages, CVF, and open PDFs in version 0.2.1. The exception was [this OpenReview PDF](https://openreview.net/pdf?id=4vGVQVz5KG), **Unsupervised Behavior Extraction via Random Intent Priors**: Chrome displayed it, while the extension returned HTTP 403.
 
 Anonymous requests to that PDF reproduced the 403; the documented notes API also returned `ChallengeRequiredError` with “Challenge verification required.” The extension previously omitted all source cookies. Version 0.2.2 lets Chrome attach existing cookies only for HTTPS OpenReview paper/forum routes. This does not read cookie values or add host permissions. Other source requests continue to omit credentials, and all source redirects remain disallowed.
 
-All 38 automated tests pass, including credential scoping, the OpenReview PDF fallback after a failed forum fetch, and the recovery link when verification still fails. Retrying the reported PDF in the installed extension with the user's existing browser session is still needed; no live success is claimed for this fix.
+All 38 automated tests pass, including credential scoping, the OpenReview PDF fallback after a failed forum fetch, and the recovery link when verification still fails. The user subsequently confirmed that the previously failing OpenReview PDF works with version 0.2.2. This completes the outstanding live source check.
 
-Chrome's extension-management UI was blocked to browser automation earlier in this task. Reloading version 0.2.2 remains a manual step.
+Live validation was performed by the user in the installed Chrome extension.
 
 ## Deliberate limitations
 

@@ -57,4 +57,4 @@ Source metadata and PDFs are processed locally. Only the extracted/entered title
 
 The reported PDF (`4vGVQVz5KG`) returned HTTP 403 anonymously, and its documented notes API returned `ChallengeRequiredError`. Source requests to HTTPS `openreview.net` / `www.openreview.net`, on `/forum` or `/pdf` with a valid note ID, now use `credentials: "include"` so Chrome can attach an existing verification/session cookie. Other source requests retain `credentials: "omit"`; redirects remain rejected. No cookie values are read and no API token or new host permission is introduced.
 
-This follows [Chrome's extension cookie handling](https://developer.chrome.com/docs/extensions/develop/concepts/storage-and-cookies). The exact authenticated-PDF behavior still needs user validation; persistent verification errors offer the corresponding paper-page link and manual fallback.
+This follows [Chrome's extension cookie handling](https://developer.chrome.com/docs/extensions/develop/concepts/storage-and-cookies). The user confirmed the previously failing PDF works with version 0.2.2. Persistent verification errors still offer the corresponding paper-page link and manual fallback.

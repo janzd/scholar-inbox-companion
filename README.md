@@ -4,7 +4,7 @@ Save papers from research websites and PDFs directly to your [Scholar Inbox](htt
 
 Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
-> **Early preview:** The user has tested arXiv, OpenReview paper pages, CVF, and open PDFs successfully. Version 0.2.2 addresses an OpenReview PDF verification error and awaits a live retry; see [validation notes](tests/VALIDATION.md).
+> **Early preview:** The user has tested arXiv, OpenReview paper pages, CVF, and open PDFs successfully. The OpenReview PDF verification fix in version 0.2.2 is also user-verified; see [validation notes](tests/VALIDATION.md).
 
 ## Features
 
