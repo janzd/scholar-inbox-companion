@@ -88,8 +88,16 @@ footer{padding:14px 24px;border-top:1px solid var(--border);font-size:10px;color
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 .secondary:hover{background:var(--secondary-hover)}
 .appearance{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;font-size:12px;color:var(--text)}
-.appearance select{width:auto;min-width:120px;padding:6px 10px;cursor:pointer}
+.theme-switch{position:relative;display:grid;grid-template-columns:repeat(3,42px);padding:3px;margin:0;border:1px solid var(--border);border-radius:12px;background:var(--disabled);overflow:visible;isolation:isolate}
+.theme-switch::before{content:"";position:absolute;top:3px;left:3px;width:42px;height:32px;border-radius:8px;background:var(--surface);box-shadow:0 1px 3px #0002;transform:translateX(84px);transition:transform .18s ease}
+:root[data-appearance="light"] .theme-switch::before{transform:translateX(0)}
+:root[data-appearance="dark"] .theme-switch::before{transform:translateX(42px)}
+.theme-switch label{position:relative;cursor:pointer;border-radius:8px}
+.theme-option{display:grid;place-items:center;height:32px;border-radius:8px;color:var(--muted);transition:color .18s ease}
+.theme-option svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.theme-switch label:hover .theme-option,.theme-switch input:checked + .theme-option{color:var(--link)}
+.theme-switch input:focus-visible + .theme-option{outline:2px solid var(--focus);outline-offset:1px}
 .footer-links{display:flex;justify-content:space-between;gap:12px}
 #pdf-file::file-selector-button{font:inherit;padding:6px 10px;margin-right:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer}
 #pdf-file::file-selector-button:hover{background:var(--secondary-hover)}
-@media (prefers-reduced-motion:reduce){button{transition:none}}
+@media (prefers-reduced-motion:reduce){button,.theme-option,.theme-switch::before{transition:none}}

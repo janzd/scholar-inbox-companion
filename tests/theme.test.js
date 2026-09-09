@@ -9,7 +9,9 @@ function popup({storage = new Map(), dark = false, broken = false} = {}) {
   const events = {}, windowEvents = {}, controlEvents = {};
   const root = {dataset: {}};
   let ready = false, changed;
-  const control = {value: '', addEventListener: (type, fn) => controlEvents[type] = fn};
+  const inputs = ['light', 'dark', 'system'].map(value => ({value, checked: false}));
+  const control = {get value() { return inputs.find(input => input.checked)?.value; },
+    querySelectorAll: () => inputs, addEventListener: (type, fn) => controlEvents[type] = fn};
   const feedback = {hidden: true};
   const media = {matches: dark, addEventListener: (_, fn) => changed = fn};
   runInNewContext(script, {
@@ -20,7 +22,7 @@ function popup({storage = new Map(), dark = false, broken = false} = {}) {
       setItem: (key, value) => { if (broken) throw Error('Blocked'); storage.set(key, value); }}
   });
   return {root, control, feedback, ready: () => { ready = true; events.DOMContentLoaded(); },
-    choose: value => { control.value = value; controlEvents.change({target: control}); },
+    choose: value => { controlEvents.change({target: {value}}); },
     system: value => { media.matches = value; changed(); },
     external: (key, newValue) => windowEvents.storage({key, newValue})};
 }

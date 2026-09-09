@@ -9,8 +9,9 @@
 
   function apply() {
     document.documentElement.dataset.theme = preference === "system" ? (system.matches ? "dark" : "light") : preference;
+    document.documentElement.dataset.appearance = preference;
     const control = document.getElementById("theme");
-    if (control) control.value = preference;
+    control?.querySelectorAll('input[name="theme"]').forEach(input => { input.checked = input.value === preference; });
   }
   apply();
   system.addEventListener("change", apply);
