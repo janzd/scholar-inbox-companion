@@ -50,7 +50,7 @@ For known PDF links, the extension first tries the associated paper page. Otherw
 
 ### Appearance
 
-Use **Theme** at the bottom of the popup to choose **Light**, **Dark**, or **System** (the default). System follows your operating system’s appearance, including changes while the popup is open. Your choice is saved locally in this Chrome profile and also applies to the timing page.
+Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Your choice is saved locally in this Chrome profile and also applies to the timing page.
 
 ### Updating
 
@@ -118,4 +118,4 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 | [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |
 | [`measurements/`](measurements/) | Lookup timing results and methodology. |
 
-For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the Theme selector to inspect either palette. Preview preferences are separate from the installed extension.
+For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the icon switch to inspect either palette. Preview preferences are separate from the installed extension.
