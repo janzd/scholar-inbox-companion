@@ -51,3 +51,57 @@
   --error-text: #ffbdba;
   --focus: #afc2ff;
 }
+
+/* Scholar Inbox's published cream/brown/orange palette, adapted for the
+   companion's controls and contrast. Blue above remains the default. */
+:root[data-palette="scholar"] {
+  --page: #f8f5e9;
+  --surface: #ffffff;
+  --text: #302222;
+  --muted: #5f6368;
+  --border: #cbbca8;
+  --link: #96522a;
+  --brand: #96522a;
+  --brand-text: #ffffff;
+  --primary: #c14600;
+  --primary-hover: #a33b00;
+  --primary-text: #ffffff;
+  --secondary-hover: #f5e9d3;
+  --disabled: #e6dfd4;
+  --disabled-text: #58595c;
+  --selected: #f5e9d3;
+  --selected-border: #c14600;
+  --positive: #f5e9d3;
+  --positive-text: #7f461f;
+  --warning: #fff1dc;
+  --warning-text: #85562b;
+  --error: #fcebea;
+  --error-text: #963f3b;
+  --focus: #c14600;
+}
+
+:root[data-palette="scholar"][data-theme="dark"] {
+  --page: #1e1a17;
+  --surface: #383330;
+  --text: #e8e0d5;
+  --muted: #b3aaa0;
+  --border: #736052;
+  --link: #ffb074;
+  --brand: #ffb074;
+  --brand-text: #302222;
+  --primary: #ffb074;
+  --primary-hover: #ffc293;
+  --primary-text: #302222;
+  --secondary-hover: #46342a;
+  --disabled: #3a3531;
+  --disabled-text: #b3aaa0;
+  --selected: #46342a;
+  --selected-border: #ff6b2c;
+  --positive: #46342a;
+  --positive-text: #ffb074;
+  --warning: #493822;
+  --warning-text: #f1cf9e;
+  --error: #482c2e;
+  --error-text: #ffbdba;
+  --focus: #ffb074;
+}

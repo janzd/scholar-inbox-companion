@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Scholar Inbox Companion",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Save papers from arXiv, CVF, OpenReview and other paper pages or PDFs to your Scholar Inbox collections.",
   "permissions": [
     "activeTab",
@@ -15,6 +15,10 @@
   "action": {
     "default_title": "Save to Scholar Inbox",
     "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "background": {
     "service_worker": "background.js",

@@ -8,7 +8,7 @@ Scholar Inbox Companion is an unofficial Chrome extension that adds a collection
 
 ## Features
 
-- Choose Light, Dark, or System appearance, remembered across popup openings and browser restarts.
+- Choose Light, Dark, or System appearance and a Blue or Scholar Inbox color palette, remembered across popup openings and browser restarts.
 - Show the detected title immediately while lookup continues, and reuse recent record mappings on repeat opens.
 - Recognize papers on arXiv, CVF Open Access, and OpenReview.
 - Read scholarly citation metadata on other websites.
@@ -50,7 +50,9 @@ For known PDF links, the extension first tries the associated paper page. Otherw
 
 ### Appearance
 
-Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Your choice is saved locally in this Chrome profile and also applies to the timing page.
+Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Right-click the extension’s toolbar icon and choose **Options** to open Settings in a new tab. You can also use the Settings icon beside the popup’s theme switch.
+
+Settings offers **Blue** and **Scholar Inbox** color palettes, each with light and dark variants. Palette and appearance mode are independent. Changes save automatically in this Chrome profile and apply to the popup, Settings, and timing page. Blue remains the default, and updating preserves your existing appearance mode.
 
 ### Updating
 
@@ -68,7 +70,7 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
 | `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
 
-The appearance preference is stored in extension-local Web Storage and persists across browser restarts. It contains only `light`, `dark`, or `system` and is never sent to a website.
+Appearance preferences are stored in extension-local Web Storage and persist across browser restarts. They contain only the mode (`light`, `dark`, or `system`) and palette (`blue` or `scholar`) and are never sent to a website.
 
 There is no persistent access to all websites and no background scanning of tabs. Page/PDF downloads do not follow redirects. Downloads normally omit credentials; HTTPS OpenReview `/forum?id=…` and `/pdf?id=…` requests let Chrome attach the existing OpenReview session and browser-verification cookies. The extension does not read or copy cookie values, and this exception adds no host or cookie permissions. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
 

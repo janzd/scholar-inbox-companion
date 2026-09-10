@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Settings · Scholar Inbox Companion</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header><div class="brand-icon" aria-hidden="true">S</div><span>Scholar Inbox Companion</span></header>
+  <main>
+    <h1>Settings</h1>
+    <section aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading">Appearance</h2>
+      <fieldset id="theme" class="mode-options">
+        <legend>Color theme</legend>
+        <p class="help" id="theme-help">Choose a look, or follow your system appearance.</p>
+        <div class="mode-choices" aria-describedby="theme-help">
+          <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+          <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+          <label><input type="radio" name="theme" value="system" checked><span>System</span></label>
+        </div>
+      </fieldset>
+      <fieldset id="palette">
+        <legend>Color palette</legend>
+        <p class="help">Each palette works in light and dark mode.</p>
+        <div class="palette-choices">
+          <label class="palette-choice">
+            <span class="palette-name"><input type="radio" name="palette" value="blue" checked><strong>Blue</strong></span>
+            <span class="swatches blue" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="palette-description">Cool neutrals with blue accents</span>
+          </label>
+          <label class="palette-choice">
+            <span class="palette-name"><input type="radio" name="palette" value="scholar"><strong>Scholar Inbox</strong></span>
+            <span class="swatches scholar" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="palette-description">Warm neutrals with orange accents</span>
+          </label>
+        </div>
+      </fieldset>
+      <p class="help">Changes are saved automatically and apply throughout the extension.</p>
+      <p id="theme-feedback" class="feedback" role="status" data-confirm="true" hidden></p>
+    </section>
+  </main>
+  <footer>Scholar Inbox Companion · Unofficial companion for Scholar Inbox</footer>
+</body>
+</html>
