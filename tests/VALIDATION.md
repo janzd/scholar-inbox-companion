@@ -32,3 +32,11 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - Palette checks verify at least 4.5:1 contrast for text, muted text, links and status/button labels on their intended backgrounds, and at least 3:1 for focus indicators.
 - A local Chrome preview exercised paper/collection, loading, candidate, manual/PDF, error, success, warning and empty-collection states in both themes (16 combinations). All rendered within the 440 px popup width. The labeled selector retained each choice across page reloads, and the saved palette was applied before body parsing. The collection preview includes already-saved and read-only rows.
 - Installed-extension reload, browser-restart persistence and an actual OS appearance toggle remain for user confirmation; automated tests cover the storage and media-query behavior. No account writes were made during theme validation.
+
+
+# Options and palettes — version 0.5.0
+
+- Syntax checks and all 58 automated tests pass. New checks cover independent palette/mode persistence, upgrade defaults, cross-page updates, invalid preferences, blocked storage and the full-tab Options declaration. Text contrast and focus contrast pass for both modes of both palettes.
+- Local Chrome checks passed for 40 page/palette/mode combinations: eight popup states, Settings and the timing page, each with Blue/Scholar Inbox and Light/Dark. Settings fits at 360 and 760 px; popup content fits at 440 px with the icon switch still centered.
+- Real browser storage events propagated Settings changes to the open popup preview. Reloads restored both preferences, and both applied before body parsing.
+- The installed extension's native right-click Options entry still needs user confirmation after reloading. Chrome's documented `options_ui` registration supplies this entry; no custom context-menu permission is used. Browser restart and actual OS theme-toggle checks were not performed in this validation.
