@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Scholar Inbox Companion",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Save papers to Scholar Inbox collections and browse your personalized digest with abstracts and figures.",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "alarms"
   ],
   "host_permissions": [
     "https://api.scholar-inbox.com/*",
@@ -35,5 +36,8 @@
     "32": "icons/icon-32.png",
     "48": "icons/icon-48.png",
     "128": "icons/store-128.png"
-  }
+  },
+  "optional_permissions": [
+    "notifications"
+  ]
 }

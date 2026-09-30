@@ -49,3 +49,11 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - Light/dark screenshots were inspected using the public ReaDiT Guidance record and its actual Scholar Inbox figure image. No account calls or writes were made for those previews.
 - Pending user checks after reloading the extension: open Your digest while signed in, compare the returned daily papers with Scholar Inbox, select another date, load another page if offered, and confirm figure enrichment on papers missing initial figures.
 - Store screenshots still represent version 0.5.0 and should be refreshed after reader UX approval, before publication. Release packaging/privacy work remains tracked in issue #10.
+
+
+# Digest notifications — version 0.6.1
+
+- 76 unit/regression tests pass, including hourly alarm restoration/throttling, availability checks, persistent per-account deduplication, old-date and cross-account acknowledgements, already-read suppression, disabling in-flight checks, coalescing, offline/logout behavior, permission/delivery failure, dated click destinations, bounded storage, and optional-permission event registration.
+- 43 reader checks and 48 Settings checks pass in isolated Chrome with mocked extension APIs. The reader checks additionally cover dated notification URLs and acknowledgement only while visible. Settings checks exercise enabling/disabling, permission-denial rollback, manual checks, theme/palette application, and narrow layouts. No native notification was sent by these tests.
+- Pending user verification after Reload: turn on desktop notifications in Settings and grant Chrome permission; run Check now while signed in; verify today's readiness signal, native banner delivery/click behavior, badge clearing, and continued checks after Chrome restarts. OS delivery and hourly behavior in the installed extension are not established by fixtures.
+- Public-release permission/privacy descriptions and store screenshots must be refreshed for the notification feature before publishing (#10).

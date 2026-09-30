@@ -26,10 +26,13 @@ try{
     await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="white"/><text x="60" y="200">Test figure</text></svg>'}));
     await context.addInitScript(({paper,mode,theme,palette})=>{
       localStorage.setItem('appearance',theme);localStorage.setItem('palette',palette);
-      window.requests=[];window.activeDetails=0;window.maxDetails=0;
+      window.requests=[];
+      if(mode==='hidden'){window.testVisibility='hidden';Object.defineProperty(document,'visibilityState',{get:()=>window.testVisibility});}
+      window.activeDetails=0;window.maxDetails=0;
       const pause=ms=>new Promise(r=>setTimeout(r,ms));
       window.chrome={runtime:{id:'test-extension',sendMessage:async request=>{
         window.requests.push(request);
+        if(request.type==='digestViewed')return{ok:true,data:{}};
         if(mode==='signed-out')return{ok:false,error:'Sign in to Scholar Inbox, then refresh.',errorCode:'AUTH_REQUIRED'};
         if(mode==='error')return{ok:false,error:'Could not load your digest.'};
         if(request.type==='digestDetail'){
@@ -40,11 +43,11 @@ try{
         const entry={...paper,title:mode==='xss'?'<img src=x onerror="window.injected=true">':request.date||paper.title};
         if(mode==='missing'||mode==='queue'){entry.figures=[];entry.firstPage=null;}
         let papers=mode==='empty'?[]:mode==='queue'?Array.from({length:6},(_,i)=>({...entry,paperId:paper.paperId+i})):request.page?[entry,{...entry,paperId:paper.paperId+1}]:[entry];
-        return{ok:true,data:{papers,date:request.date||'2026-09-07',page:request.page||0,skipped:0,hasMore:mode==='normal'&&!request.page,previousDate:'2026-09-06',nextDate:null}};
+        return{ok:true,data:{accountKey:'a'.repeat(64),papers,date:request.date||'2026-09-07',page:request.page||0,skipped:0,hasMore:mode==='normal'&&!request.page,previousDate:'2026-09-06',nextDate:null}};
       }}};
     },{paper,mode,theme,palette});
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(origin+'/digest.html');await page.waitForFunction(()=>document.querySelector('#papers').getAttribute('aria-busy')==='false');
+    await page.goto(origin+'/digest.html'+(mode==='dated'?'?date=2026-09-29':''));await page.waitForFunction(()=>document.querySelector('#papers').getAttribute('aria-busy')==='false');
     return{page,context};
   }
   const {page,context}=await open();
@@ -82,6 +85,15 @@ try{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);checks+=3;
     await context.close();
   }
+  const dated=await open('dated');
+  assert.equal(await dated.page.locator('#date').inputValue(),'2026-09-29');
+  assert.equal(await dated.page.evaluate(()=>window.requests.find(r=>r.type==='digestViewed').values.date),'2026-09-29');
+  await dated.context.close();
+  const hidden=await open('hidden');
+  assert.equal(await hidden.page.evaluate(()=>window.requests.some(r=>r.type==='digestViewed')),false);
+  await hidden.page.evaluate(()=>{window.testVisibility='visible';document.dispatchEvent(new Event('visibilitychange'));});
+  assert.equal(await hidden.page.evaluate(()=>window.requests.filter(r=>r.type==='digestViewed').length),1);
+  checks+=4;await hidden.context.close();
   const broken=await open();
   await broken.context.route('https://www.scholar-inbox.com/**',route=>route.abort());
   await broken.page.reload();await broken.page.getByText('This image could not be loaded. Try another figure or open the paper.',{exact:true}).waitFor();checks++;

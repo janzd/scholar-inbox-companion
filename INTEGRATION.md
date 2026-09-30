@@ -86,3 +86,18 @@ The reader checks the current session before each digest/detail operation and va
 Abstracts are used directly. Missing abstracts/figures trigger lazy detail reads with concurrency capped at two. Account-dependent content remains in page memory; appearance settings and existing popup diagnostics/cache are separate. The reader performs no collection writes, ratings, read markers, notifications, or scheduled polling.
 
 The contract and real public figure rendering were checked; authenticated retrieval through the installed extension and live date pagination are **not yet verified**. Automated tests exercise mocked responses and must not be interpreted as live account verification. The official API review above remains historical context.
+
+
+## Hourly digest notifications — version 0.6.1
+
+Supersedes the reader-only scheduling scope of version 0.6.0. The user requested checks every 60 minutes. A named Chrome alarm is restored on worker startup if absent; the extension also checks on browser startup. Concurrent checks coalesce, recent automatic checks are throttled, and disabling invalidates an in-flight response.
+
+The poll checks sign-in and fetches only the first batch for today in UTC via `GET /?date=MM-DD-YYYY`. It requires a non-empty `digest_df`, an identifiable `username`, matching explicit digest date fields, and `empty_digest !== true`. It does not fetch figures or paper details. No verified completion/email event was found in the inspected public website contract: this is an availability heuristic, not proof that generation is complete or email was sent. Authenticated readiness semantics still need live validation.
+
+SHA-256 of a namespaced username scopes date receipts without storing raw usernames. At most five account records retain seen, notified, and unread dates in local extension storage. Preferences and last-check status/timestamps are also local; digest bodies are discarded. Account switching uses independent receipts; sign-out clears current indicators without deleting deduplication history.
+
+The worker persists an announcement receipt before displaying its desktop banner to avoid repeats after a restart. A delivery failure can therefore miss that day's banner; the unread badge remains. Chrome/system denial is handled without an error notification. Desktop permission is optional and requested from the Settings toggle's user gesture. Notifications contain only the digest date and generic text. Clicking one opens that date; the badge clears only after a visible reader acknowledges successfully rendered papers for the same account/date. An older reader cannot clear a newer unread digest.
+
+Settings alone can invoke alert configuration/status/manual-check routes. The reader can acknowledge its displayed digest, and its existing collection write restrictions remain. The manifest adds `alarms` and optional `notifications`, with no new hosts, tab-reading, or cookie permissions.
+
+Chrome references: [alarms and restart/sleep behavior](https://developer.chrome.com/docs/extensions/reference/api/alarms), [notification creation/clicks](https://developer.chrome.com/docs/extensions/reference/api/notifications), and [optional permission requests](https://developer.chrome.com/docs/extensions/reference/api/permissions).

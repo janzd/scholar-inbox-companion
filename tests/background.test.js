@@ -8,6 +8,14 @@ test('background accepts the popup resolve and choose routes and rejects other s
   const sender = {id: 'test', url: 'chrome-extension://test/popup.html'};
   const paper = {paper_id: 42, title: 'A Useful Paper', authors: 'Example Author', cache_file_name: 'Example_Paper.pdf', user_paper_collections: []};
   globalThis.chrome = {storage: {session: {get: async () => storage, set: async data => Object.assign(storage, data)}}, runtime: {id: 'test', getURL: path => `chrome-extension://test/${path}`, onMessage: {addListener: fn => { listener = fn; }}}};
+  const alertStore={digestAlertPreferencesV1:{enabled:false,desktop:false}};
+  const event={addListener:()=>{}};
+  Object.assign(chrome.runtime,{onStartup:event,onInstalled:event});
+  chrome.storage.local={get:async()=>structuredClone(alertStore),set:async data=>Object.assign(alertStore,structuredClone(data))};
+  chrome.alarms={onAlarm:event,get:async()=>null,clear:async()=>{},create:async()=>{}};
+  chrome.action={setBadgeText:async()=>{},setBadgeBackgroundColor:async()=>{}};
+  chrome.permissions={onAdded:event,contains:async()=>true};
+  chrome.notifications={onClicked:event,clear:async()=>{}};
   const pageDownloads = [];
   globalThis.fetch = async (url, options) => {
     if (!url.startsWith(API)) {
@@ -53,6 +61,16 @@ test('background accepts the popup resolve and choose routes and rejects other s
     assert.equal(detail.ok,true);
     for(const type of ['save','choose','resolve','landingPage','benchmarkMode']) assert.equal(listener({type},digestSender,()=>assert.fail('Digest must remain read-only')),false);
     assert.equal(listener({type:'digest'},sender,()=>assert.fail('Popup cannot request a digest')),false);
+    const settingsSender={id:'test',url:'chrome-extension://test/options.html'};
+    const alertStatus=await new Promise(resolve=>listener({type:'digestAlertStatus'},settingsSender,resolve));
+    assert.equal(alertStatus.ok,true);assert.equal(alertStatus.data.enabled,false);
+    const alertConfigured=await new Promise(resolve=>listener({type:'digestAlertSettings',values:{enabled:false,desktop:true}},settingsSender,resolve));
+    assert.equal(alertConfigured.ok,true);assert.equal(alertStore.digestAlertPreferencesV1.desktop,true);
+    for(const type of ['digestAlertSettings','digestAlertStatus','digestAlertCheck'])for(const source of [sender,digestSender])assert.equal(listener({type},source,()=>assert.fail('Only Settings controls alerts')),false);
+    for(const type of ['save','digest','digestViewed'])assert.equal(listener({type},settingsSender,()=>assert.fail('Settings cannot invoke paper routes')),false);
+    const dated=await new Promise(resolve=>listener({type:'digest'},{...digestSender,url:digestSender.url+'?date=2026-09-07'},resolve));
+    assert.equal(dated.ok,true);
+    assert.equal(listener({type:'digest'},{...digestSender,url:digestSender.url+'?date=invalid'},()=>assert.fail('Invalid reader URL')),false);
     const diagnosticSender = {id: 'test', url: 'chrome-extension://test/benchmark.html'};
     assert.equal(listener({type: 'save'}, diagnosticSender, () => assert.fail('Timing page must not save')), false);
     assert.equal(listener({type: 'landingPage'}, diagnosticSender, () => assert.fail('Timing page must not fetch pages')), false);

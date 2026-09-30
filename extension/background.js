@@ -1,22 +1,34 @@
-import {loadDigest, loadDigestDetail} from "./digest-core.js";
+import {registerDigestAlerts} from "./digest-alerts.js";
+import {digestDate, loadDigest, loadDigestDetail} from "./digest-core.js";
 import {ScholarClient} from "./core.js";
 import {LookupCache} from "./cache.js";
 import {sourcePlan, fetchPublic} from "./sources.js";
 const cache = new LookupCache({storage: chrome.storage?.session});
 const client = new ScholarClient(undefined, {cache});
 let saving = false;
+const alerts = chrome.alarms ? registerDigestAlerts(chrome,client) : null;
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   // Each extension page has a narrow route allowlist. The digest is read-only.
   if (sender.id !== chrome.runtime.id) return false;
   const diagnostic = sender.url === chrome.runtime.getURL("benchmark.html");
-  const digest = sender.url === chrome.runtime.getURL("digest.html");
+  const digestURL = chrome.runtime.getURL("digest.html");
+  const digest = sender.url === digestURL || (sender.url?.startsWith(digestURL+"?date=") && !!digestDate(new URL(sender.url).searchParams.get("date")));
+  const settings = sender.url === chrome.runtime.getURL("options.html");
   const popup = sender.url === chrome.runtime.getURL("popup.html");
-  const allowed = digest ? ["digest", "digestDetail"] : diagnostic ? ["benchmarkMode"] : popup
+  const allowed = settings ? ["digestAlertStatus", "digestAlertSettings", "digestAlertCheck"] : digest ? ["digest", "digestDetail", "digestViewed"] : diagnostic ? ["benchmarkMode"] : popup
     ? ["metadata", "landingPage", "lookup", "resolve", "choose", "save"] : [];
   if (!allowed.includes(message?.type)) return false;
   (async () => {
     switch (message?.type) {
+      case "digestAlertStatus": return await alerts.status();
+      case "digestAlertSettings": {
+        const result=await alerts.configure(message.values);
+        if(result.enabled)void alerts.check(true).catch(()=>{});
+        return result;
+      }
+      case "digestAlertCheck": await alerts.check(true); return await alerts.status();
+      case "digestViewed": await alerts?.viewed(message.values); return {};
       case "digest": return await loadDigest(client, {date: message.date ?? null, page: message.page ?? 0});
       case "digestDetail": return await loadDigestDetail(client, message.paper);
       case "benchmarkMode": {

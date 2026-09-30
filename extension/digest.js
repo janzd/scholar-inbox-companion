@@ -113,6 +113,15 @@ function renderPaper(paper, token) {
   }
   return card;
 }
+let acknowledged=null;
+function acknowledgeVisibleDigest() {
+  if(preview||document.visibilityState!=='visible'||!currentData?.accountKey||!currentDate||!knownIds.size)return;
+  const receipt=currentData.accountKey+':'+currentDate;
+  if(receipt===acknowledged)return;
+  acknowledged=receipt;
+  send('digestViewed',{values:{accountKey:currentData.accountKey,date:currentDate}}).catch(()=>{acknowledged=null;});
+}
+document.addEventListener('visibilitychange',acknowledgeVisibleDigest);
 async function load(date = null, append = false) {
   const token = append ? generation : ++generation;
   if (!append) {clearPapers(); currentDate = date; currentPage = 0; currentData = null;}
@@ -127,6 +136,7 @@ async function load(date = null, append = false) {
     $('count').textContent = `${knownIds.size} paper${knownIds.size === 1 ? '' : 's'}`;
     $('empty').hidden = knownIds.size !== 0; $('more').hidden = !data.hasMore;
     $('previous').disabled = !data.previousDate; $('next').disabled = !data.nextDate;
+    acknowledgeVisibleDigest();
     status(data.skipped ? 'Some entries could not be displayed. Open Scholar Inbox to see the complete digest.' : '');
   } catch (error) {
     if (token !== generation) return;
@@ -145,4 +155,5 @@ $('close-figure').addEventListener('click',()=>$('figure-dialog').close());
 $('figure-dialog').addEventListener('close',()=>{$('large-figure').removeAttribute('src');$('large-caption').textContent='';});
 $('large-figure').addEventListener('error',()=>{$('large-caption').textContent='This image could not be loaded. Close this preview and open the paper instead.';});
 if (preview) $('preview-note').hidden = false;
-load();
+const initialDate=new URLSearchParams(location.search).get('date');
+load(/^\d{4}-\d{2}-\d{2}$/.test(initialDate||'')?initialDate:null);

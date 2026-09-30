@@ -78,6 +78,12 @@ export function normalizeDigest(data, requestedDate = null, page = 0) {
     previousDate:digestDate(data.prev_date), nextDate:digestDate(data.next_date)};
 }
 
+export async function digestAccount(username) {
+  if(typeof username!=='string'||!username.trim()||username.length>500)return null;
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('scholar-inbox:'+username.trim()));
+  return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
+}
+
 export async function loadDigest(client, options = {}) {
   const path = digestQuery(options);
   await client.session();
@@ -87,9 +93,9 @@ export async function loadDigest(client, options = {}) {
   const from = digestDate(data.from_date), to = digestDate(data.to_date);
   if (options.date == null && from && to && from !== to) {
     data = await client.request(digestQuery({date:to}));
-    return normalizeDigest(data, to, 0);
+    return {...normalizeDigest(data, to, 0),accountKey:await digestAccount(data.username)};
   }
-  return normalizeDigest(data, options.date ?? null, options.page ?? 0);
+  return {...normalizeDigest(data, options.date ?? null, options.page ?? 0),accountKey:await digestAccount(data.username)};
 }
 
 export async function loadDigestDetail(client, expected) {
