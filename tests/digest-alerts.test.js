@@ -101,3 +101,11 @@ test('event handlers restore hourly checks and register notification clicks afte
   h.events.permission[0]();assert.equal(h.events.click.length,1);
   h.events.click[0](ALERT_NOTIFICATION);await a.tail;assert.equal(h.tabs.length,1);
 });
+
+
+test('unread hourly results reach Slack independently of desktop settings; read or disabled digests do not',async()=>{
+  const h=harness();const calls=[];const a=new DigestAlerts({api:h.api,client:h.client,now:h.now,slack:{deliver:async r=>calls.push(r)}});
+  await a.check();assert.equal(calls.length,1);assert.equal(h.notifications.length,0);
+  await a.viewed({accountKey:await digestAccount('alice'),date:'2026-09-30'});await a.check(true);assert.equal(calls.length,1);
+  await a.configure({enabled:false,desktop:false});await a.check(true);assert.equal(calls.length,1);
+});

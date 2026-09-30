@@ -51,8 +51,23 @@
       <p id="digest-check-status" class="help" role="status"></p>
       <p id="digest-feedback" class="feedback" role="status"></p>
     </section>
+    <section class="digest-settings" aria-labelledby="slack-heading">
+      <h2 id="slack-heading">Slack notifications</h2>
+      <p class="help">Optional setup for an incoming webhook. Messages go to the channel chosen in Slack, including a private channel if permitted. Direct bot DMs are not included. Your workspace may require app approval.</p>
+      <form id="slack-form">
+        <label for="slack-webhook">Incoming webhook URL</label>
+        <input id="slack-webhook" type="password" autocomplete="off" spellcheck="false" placeholder="https://hooks.slack.com/services/…" disabled>
+        <p class="help">Stored only in this Chrome profile, not synced or encrypted by the extension. Treat the URL as a secret. Leaving it blank keeps the saved webhook.</p>
+        <label class="check-option"><input id="slack-enabled" type="checkbox" disabled><span>Enable Slack notifications</span></label>
+        <p class="help">Uses the Scholar Inbox account signed in when enabled. Hourly checks must also be on. Future checks can post a generic digest notice and a Scholar Inbox link; no paper titles or abstracts are sent.</p>
+        <div class="slack-actions"><button type="submit" disabled>Save Slack settings</button><button id="slack-remove" type="button" disabled>Remove webhook</button></div>
+      </form>
+      <p id="slack-status" class="help" role="status"></p><p id="slack-feedback" class="feedback" role="status"></p>
+      <a href="https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/" target="_blank" rel="noopener noreferrer">Slack webhook setup instructions ↗</a>
+    </section>
   </main>
   <footer>Scholar Inbox Companion · Unofficial companion for Scholar Inbox</footer>
 <script type="module" src="options-alerts.js"></script>
+<script type="module" src="options-slack.js"></script>
 </body>
 </html>

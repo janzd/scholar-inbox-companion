@@ -101,3 +101,14 @@ The worker persists an announcement receipt before displaying its desktop banner
 Settings alone can invoke alert configuration/status/manual-check routes. The reader can acknowledge its displayed digest, and its existing collection write restrictions remain. The manifest adds `alarms` and optional `notifications`, with no new hosts, tab-reading, or cookie permissions.
 
 Chrome references: [alarms and restart/sleep behavior](https://developer.chrome.com/docs/extensions/reference/api/alarms), [notification creation/clicks](https://developer.chrome.com/docs/extensions/reference/api/notifications), and [optional permission requests](https://developer.chrome.com/docs/extensions/reference/api/permissions).
+
+
+## Optional Slack wiring — version 0.6.2
+
+Incoming-webhook delivery is off without explicit Settings configuration and enablement. Only the exact Settings page may read redacted Slack status or change configuration. Configuration changes invalidate a pending poll and serialize with delivery. Enabling requires optional host permission and binds to the current authenticated digest username hash; a later account mismatch suppresses delivery.
+
+Webhook secrets stay in trusted-context local storage, unsynced and unencrypted. Settings never receives the saved URL back. Requests accept only validated HTTPS `hooks.slack.com/services/…` URLs, omit cookies, reject redirects, and time out after ten seconds. Payloads contain a generic notice, validated date, and public Scholar Inbox digest link with unfurling disabled. No Scholar Inbox account identifier or paper metadata is transmitted. Raw webhook URLs, Slack response text, and fetch errors are not logged or exposed.
+
+Each account record now also retains `slackAttemptedDate`. Persist-before-send prevents duplicate attempts after worker restarts; ambiguous failures are not automatically retried. The badge is updated before Slack delivery, and Slack errors cannot stop normal digest behavior. Removing configuration deletes the webhook; Chrome's optional host grant can remain until revoked through Chrome.
+
+The existing hourly scheduler is reused; no separate backend, Slack OAuth flow, direct bot DMs, or real test sends were added. Destination channels and workspace approval are controlled by Slack. [Official webhook documentation](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) informed this adapter.
