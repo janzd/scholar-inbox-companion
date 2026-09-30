@@ -104,3 +104,5 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 #pdf-file::file-selector-button{font:inherit;padding:6px 10px;margin-right:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer}
 #pdf-file::file-selector-button:hover{background:var(--secondary-hover)}
 @media (prefers-reduced-motion:reduce){button,.theme-option,.theme-switch::before{transition:none}}
+
+.digest-link{position:absolute;left:0;font-size:12px;font-weight:600}

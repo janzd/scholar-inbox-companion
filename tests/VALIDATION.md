@@ -40,3 +40,12 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - Local Chrome checks passed for 40 page/palette/mode combinations: eight popup states, Settings and the timing page, each with Blue/Scholar Inbox and Light/Dark. Settings fits at 360 and 760 px; popup content fits at 440 px with the icon switch still centered.
 - Real browser storage events propagated Settings changes to the open popup preview. Reloads restored both preferences, and both applied before body parsing.
 - The installed extension's native right-click Options entry still needs user confirmation after reloading. Chrome's documented `options_ui` registration supplies this entry; no custom context-menu permission is used. Browser restart and actual OS theme-toggle checks were not performed in this validation.
+
+
+# Rich digest reader — version 0.6.0
+
+- Unit tests cover calendar validation, website date/page parameters, default-range resolution, deduplication, missing figures, safe paper/image URLs, session requirements, detail identity checks, and worker route isolation. Existing popup/save tests remain in the suite.
+- `npm run test:digest-ui` runs 39 browser checks with fixtures in a temporary Chrome profile: abstract/link rendering, figure navigation/enlargement/Escape, pagination deduplication, empty/error/signed-out/missing-image states, escaped titles, stale-date response handling, two-request detail concurrency, and both palettes/themes at 390/1280 px without horizontal overflow.
+- Light/dark screenshots were inspected using the public ReaDiT Guidance record and its actual Scholar Inbox figure image. No account calls or writes were made for those previews.
+- Pending user checks after reloading the extension: open Your digest while signed in, compare the returned daily papers with Scholar Inbox, select another date, load another page if offered, and confirm figure enrichment on papers missing initial figures.
+- Store screenshots still represent version 0.5.0 and should be refreshed after reader UX approval, before publication. Release packaging/privacy work remains tracked in issue #10.

@@ -70,3 +70,19 @@ The bundled timing page can configure a baseline/optimized loading mode and clea
 The user reported an unused OpenReview CSS preload warning attributed to `popup.html`. A local Chrome reproduction isolated HTTP `Link: <...>; rel=preload; as=style` response headers: fetching the response from a document downloaded the stylesheet, whereas fetching the same response in a service worker did not. Parsing an HTML preload tag with the existing detached DOMParser did not download it in that reproduction.
 
 Derived OpenReview and CVF landing-page downloads now run in the extension background worker. The popup still parses the returned HTML and automatically searches the extracted title. The worker accepts only source-plan-derived alternate pages on these supported hosts, retaining the existing size limit, redirect rejection and scoped OpenReview credentials. No new permissions are required. Automated tests cover routing, automatic matching, unsupported URLs and verification/PDF fallbacks; live installed-extension confirmation remains pending.
+
+
+## Digest reader — version 0.6.0, September 30, 2026
+
+The full-page reader reuses the existing session integration rather than requiring an API key. The current public [Scholar Inbox frontend](https://www.scholar-inbox.com/) API module and digest component expose the following read contract:
+
+- `GET /` returns the default digest. `GET /?date=MM-DD-YYYY` selects a day; `p=1` is the second batch, with subsequent integer pages.
+- `digest_df` contains paper records; `from_date` / `to_date` describe the selected range. The reader also accepts the older `current_digest_date` field. `prev_date`, `next_date`, and `has_more_papers_in_digest` control navigation.
+- The reader shows daily digests. If the default response spans a range, it requests the final day before displaying/paging it.
+- Paper detail at `GET /papers/{slug}` exposes `teaser_figures` (`imageUrl`, `caption`, `figureNumber`, `figureType`) and `first_page_image.imageUrl`. Image paths resolve against the website origin, not the API origin.
+
+The reader checks the current session before each digest/detail operation and validates enriched records against both paper ID and slug. Only its exact extension page can call the digest worker routes; that page cannot call save, lookup, or diagnostic routes. Responses discard personal fields unrelated to rendering. Images are restricted to public Scholar Inbox figure/first-page paths for the corresponding paper ID. No credentials are read, API keys stored, or permissions added.
+
+Abstracts are used directly. Missing abstracts/figures trigger lazy detail reads with concurrency capped at two. Account-dependent content remains in page memory; appearance settings and existing popup diagnostics/cache are separate. The reader performs no collection writes, ratings, read markers, notifications, or scheduled polling.
+
+The contract and real public figure rendering were checked; authenticated retrieval through the installed extension and live date pagination are **not yet verified**. Automated tests exercise mocked responses and must not be interpreted as live account verification. The official API review above remains historical context.

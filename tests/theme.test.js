@@ -137,7 +137,7 @@ test('palette updates propagate to other views, with invalid values falling back
 test('Options is a full-tab extension page and all views initialize shared appearance before styles', async () => {
   const manifest = JSON.parse(await readFile(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
   assert.deepEqual(manifest.options_ui, {page:'options.html', open_in_tab:true});
-  for (const page of ['options.html','popup.html','benchmark.html']) {
+  for (const page of ['options.html','popup.html','benchmark.html','digest.html']) {
     const markup = await readFile(new URL('../extension/'+page, import.meta.url), 'utf8');
     assert.ok(markup.indexOf('<script src="theme.js"></script>') >= 0);
     assert.ok(markup.indexOf('<script src="theme.js"></script>') < markup.indexOf('<link rel="stylesheet"'));

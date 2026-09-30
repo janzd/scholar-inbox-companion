@@ -1,12 +1,14 @@
 # Scholar Inbox Companion
 
-Save papers from research websites and PDFs directly to your [Scholar Inbox](https://www.scholar-inbox.com/) collections.
+Save papers from research websites and PDFs to your [Scholar Inbox](https://www.scholar-inbox.com/) collections, and browse your daily digest with abstracts and figures.
 
 Scholar Inbox Companion is an unofficial Chrome extension that adds a collection picker to your browsing workflow. Open a paper, choose a collection, and save it without switching to Scholar Inbox to search for it again.
 
 > **Early preview:** The user has tested arXiv, OpenReview paper pages, CVF, and open PDFs successfully. The OpenReview PDF verification fix in version 0.2.2 is also user-verified; see [validation notes](tests/VALIDATION.md).
 
 ## Features
+
+- Open your personalized daily digest in a full-page reader, with abstracts, figure galleries, captions, and links to the paper and Scholar Inbox.
 
 - Choose Light, Dark, or System appearance and a Blue or Scholar Inbox color palette, remembered across popup openings and browser restarts.
 - Show the detected title immediately while lookup continues, and reuse recent record mappings on repeat opens.
@@ -48,11 +50,19 @@ The Scholar Inbox tab does not need to remain open. Use **Edit title / Search ag
 
 For known PDF links, the extension first tries the associated paper page. Otherwise, it reads the PDF locally and automatically searches using the extracted title. Check the matched paper before saving; you can edit the title if extraction was inaccurate. If a PDF URL has no `.pdf` suffix, use **Read this tab as a PDF** in the fallback view. You can also choose a downloaded PDF or enter its title manually. Choosing a local file does not upload it.
 
+### Your digest
+
+Click **Your digest** at the bottom of the popup to open the full-page reader. It uses your existing Scholar Inbox login. Choose a date, browse available previous/next digests, or use **Latest** to open the service’s default digest date. If Scholar Inbox returns a saved date range, Latest opens its final day. Use **Load more papers** when additional results are available.
+
+Each paper shows its abstract and the figures Scholar Inbox provides. Click a figure to enlarge it, use the arrows to browse figures and tables, and expand long captions. Missing details load as cards approach the viewport, with at most two detail requests in progress. If figures are unavailable, the reader shows a labeled first-page preview when available, or an explicit missing-figure message.
+
+This first version is read-only: browsing does not save, rate, dismiss, or mark papers read. It does not generate summaries or run scheduled/background digest checks. Installed-account retrieval and date navigation still need live user verification; the automated checks use fixtures.
+
 ### Appearance
 
 Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Right-click the extension’s toolbar icon and choose **Options** to open Settings in a new tab. You can also use the Settings icon beside the popup’s theme switch.
 
-Settings offers **Blue** and **Scholar Inbox** color palettes, each with light and dark variants. Palette and appearance mode are independent. Changes save automatically in this Chrome profile and apply to the popup, Settings, and timing page. Blue remains the default, and updating preserves your existing appearance mode.
+Settings offers **Blue** and **Scholar Inbox** color palettes, each with light and dark variants. Palette and appearance mode are independent. Changes save automatically in this Chrome profile and apply to the popup, digest reader, Settings, and timing page. Blue remains the default, and updating preserves your existing appearance mode.
 
 ### Updating
 
@@ -68,7 +78,9 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 | `storage` | Keep a bounded record-lookup cache and timing diagnostics in browser-session memory. |
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
-| `https://api.scholar-inbox.com/*` | Find the paper, load your collections, and save to the collection you select. |
+| `https://api.scholar-inbox.com/*` | Find papers, read your digest and paper details, load your collections, and save to the collection you select. |
+
+Digest requests send the requested date and page to Scholar Inbox; detail requests send the paper slug. Digest content stays in the open reader’s memory and is cleared on navigation, refresh, or an authentication error. It is not added to the extension’s lookup cache or local storage. Images load directly from Scholar Inbox’s public figure/first-page paths and may use Chrome’s normal image cache. No extra host permission or API key is required.
 
 Appearance preferences are stored in extension-local Web Storage and persist across browser restarts. They contain only the mode (`light`, `dark`, or `system`) and palette (`blue` or `scholar`) and are never sent to a website.
 
@@ -97,10 +109,6 @@ The timing page (`benchmark.html` in the installed extension) records up to 20 o
 
 The extension currently uses Scholar Inbox’s internal website API. Changes to that API may require updates to the extension.
 
-## Planned
-
-A richer digest reader with abstracts or contribution summaries, figures, and links to the paper and Scholar Inbox. This is not included in the current version.
-
 ## Development
 
 Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a DOM test environment, and icon/store asset export tooling.
@@ -109,9 +117,10 @@ Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a 
 npm ci
 npm run check
 npm test
+npm run test:digest-ui
 ```
 
-Load `extension/` unpacked in Chrome, edit the source, and reload the extension to test changes. PDF.js 6.3.289 compatibility builds are committed in `extension/vendor/`, so installation still requires no build. To reproduce those files after `npm ci`, run `npm run vendor:pdf`; keep the [third-party license](extension/vendor/PDFJS-LICENSE) with them. Automated tests use mocked network responses and do not modify a Scholar Inbox account.
+Load `extension/` unpacked in Chrome, edit the source, and reload the extension to test changes. PDF.js 6.3.289 compatibility builds are committed in `extension/vendor/`, so installation still requires no build. To reproduce those files after `npm ci`, run `npm run vendor:pdf`; keep the [third-party license](extension/vendor/PDFJS-LICENSE) with them. Automated tests use mocked network responses and do not modify a Scholar Inbox account. The digest browser checks launch installed Chrome in an isolated temporary profile. Set `DIGEST_TEST_BROWSER_CHANNEL` to another installed Playwright channel if necessary.
 
 | Path | Contents |
 | --- | --- |
@@ -122,4 +131,6 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 | [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |
 | [`measurements/`](measurements/) | Lookup timing results and methodology. |
 
-For a UI-only preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the icon switch to inspect either palette. Preview preferences are separate from the installed extension.
+For a digest preview, serve `extension/` and open `digest.html?preview=1`. It uses one public example paper and loads its public figures from Scholar Inbox, with no account requests. Add `&view=empty`, `&view=missing`, `&view=error`, or `&view=signed-out` to inspect fallback states.
+
+For a UI-only popup preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the icon switch to inspect either palette. Preview preferences are separate from the installed extension.

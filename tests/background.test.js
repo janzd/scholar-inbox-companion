@@ -16,6 +16,7 @@ test('background accepts the popup resolve and choose routes and rejects other s
     }
     const path = url.slice(API.length);
     const data = path === '/session_info' ? {is_logged_in: true}
+      : path === '/' ? {digest_df:[paper],current_digest_date:'09-07-2026'}
       : path === '/search' ? {digest_df: [paper]}
       : path === '/get_all_user_collections' ? {collections: []}
       : {is_authenticated: true, paper};
@@ -45,6 +46,13 @@ test('background accepts the popup resolve and choose routes and rejects other s
     }
     assert.equal(pageDownloads.length, 3, 'Unsupported URLs must not be fetched');
     assert.equal(listener({type: 'resolve'}, {id: 'other', url: sender.url}, () => assert.fail('Unexpected reply')), false);
+    const digestSender = {id:'test',url:'chrome-extension://test/digest.html'};
+    const digest = await new Promise(resolve => assert.equal(listener({type:'digest'},digestSender,resolve),true));
+    assert.equal(digest.ok,true); assert.equal(digest.data.papers[0].paperId,42);
+    const detail = await new Promise(resolve => listener({type:'digestDetail',paper:{paperId:42,slug:'Example_Paper'}},digestSender,resolve));
+    assert.equal(detail.ok,true);
+    for(const type of ['save','choose','resolve','landingPage','benchmarkMode']) assert.equal(listener({type},digestSender,()=>assert.fail('Digest must remain read-only')),false);
+    assert.equal(listener({type:'digest'},sender,()=>assert.fail('Popup cannot request a digest')),false);
     const diagnosticSender = {id: 'test', url: 'chrome-extension://test/benchmark.html'};
     assert.equal(listener({type: 'save'}, diagnosticSender, () => assert.fail('Timing page must not save')), false);
     assert.equal(listener({type: 'landingPage'}, diagnosticSender, () => assert.fail('Timing page must not fetch pages')), false);
