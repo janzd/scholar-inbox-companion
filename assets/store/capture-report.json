@@ -1,0 +1,39 @@
+{
+  "browser": "154.0.8037.92",
+  "data": "Built-in local preview fixtures only; all external requests blocked.",
+  "screenshots": [
+    {
+      "file": "screenshot-01-save-1280x800.png",
+      "scene": "save",
+      "mode": "light",
+      "palette": "blue",
+      "overflow": false,
+      "verticalOverflow": false,
+      "images": true,
+      "uiScale": 0.8984771573604061,
+      "errors": []
+    },
+    {
+      "file": "screenshot-02-collect-1280x800.png",
+      "scene": "collect",
+      "mode": "dark",
+      "palette": "scholar",
+      "overflow": false,
+      "verticalOverflow": false,
+      "images": true,
+      "uiScale": 1,
+      "errors": []
+    },
+    {
+      "file": "screenshot-03-settings-1280x800.png",
+      "scene": "settings",
+      "mode": "light",
+      "palette": "scholar",
+      "overflow": false,
+      "verticalOverflow": false,
+      "images": true,
+      "uiScale": 0.9078947368421053,
+      "errors": []
+    }
+  ]
+}
