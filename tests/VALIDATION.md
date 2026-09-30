@@ -57,3 +57,10 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - 43 reader checks and 48 Settings checks pass in isolated Chrome with mocked extension APIs. The reader checks additionally cover dated notification URLs and acknowledgement only while visible. Settings checks exercise enabling/disabling, permission-denial rollback, manual checks, theme/palette application, and narrow layouts. No native notification was sent by these tests.
 - Pending user verification after Reload: turn on desktop notifications in Settings and grant Chrome permission; run Check now while signed in; verify today's readiness signal, native banner delivery/click behavior, badge clearing, and continued checks after Chrome restarts. OS delivery and hourly behavior in the installed extension are not established by fixtures.
 - Public-release permission/privacy descriptions and store screenshots must be refreshed for the notification feature before publishing (#10).
+
+
+# Slack wiring — version 0.6.2
+
+- Unit tests use a deliberately fake webhook and an injected fetch stub. They cover URL restriction, secret redaction, trusted storage, offline disabled setup, permission checks, account binding, generic payloads, credential/redirect policy, persistent duplicate suppression, failed/uncertain results, and sender allowlists. Scheduler integration verifies unread-only delivery independent of desktop notifications.
+- Settings browser tests mock the extension APIs and block external network requests. They exercise saving disabled, masked/cleared inputs, enabling, removing configuration, and narrow layouts in both themes/palettes.
+- No real Slack endpoint was contacted and no Slack messages were sent. Workspace installation/approval, real webhook authentication and delivery remain unverified.
