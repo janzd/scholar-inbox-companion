@@ -103,7 +103,7 @@ A richer digest reader with abstracts or contribution summaries, figures, and li
 
 ## Development
 
-Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a DOM test environment, and icon export tooling.
+Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a DOM test environment, and icon/store asset export tooling.
 
 ```sh
 npm ci
@@ -116,6 +116,7 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 | Path | Contents |
 | --- | --- |
 | [`extension/`](extension/) | Extension source and a read-only timing comparison page. |
+| [`assets/store/`](assets/store/) | Store screenshots, promotional tile, listing draft, and capture instructions. |
 | [`assets/branding/`](assets/branding/) | Editable icon artwork and export instructions (`npm run icons:build`). |
 | [`tests/`](tests/) | Tests for matching, permissions, save confirmation, errors, and parallel loading. |
 | [`INTEGRATION.md`](INTEGRATION.md) | Internal endpoint notes and the official API review. |

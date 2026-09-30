@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Scholar Inbox Companion — store screenshots</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:1280px;height:800px;overflow:hidden}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f2f5fc;color:#192b4c}body.dark{background:#211c19;color:#fff5e7}.wash{position:absolute;inset:0;background:radial-gradient(ellipse at 100% 15%,#dbe5ff 0,transparent 58%);pointer-events:none}.dark .wash{background:radial-gradient(ellipse at 95% 0%,#4e3423 0,transparent 65%)}.brand{position:absolute;left:64px;top:48px;display:flex;align-items:center;gap:14px;font-weight:650;font-size:18px;letter-spacing:-.2px}.brand img{width:44px;height:44px}.copy{position:absolute;left:64px;top:208px;width:560px}.eyebrow{font-size:13px;letter-spacing:2px;font-weight:700;color:#365cc7;text-transform:uppercase;margin-bottom:22px}.dark .eyebrow{color:#ffb074}h1{font-size:54px;line-height:1.06;letter-spacing:-2.3px;font-weight:700;margin:0 0 26px}p{font-size:22px;line-height:1.55;color:#53627a;margin:0}.dark p{color:#c7bcae}.sources{display:flex;gap:10px;margin-top:36px}.sources span{font-size:14px;padding:10px 14px;border:1px solid #c7d2e7;border-radius:30px;background:#ffffff80}.dark .sources span{border-color:#5b493b;background:#352b24}.footnote{position:absolute;left:64px;bottom:40px;font-size:12px;line-height:1.8;color:#69778d}.dark .footnote{color:#b4a798}.stage{position:absolute;left:725px;top:42px;width:440px;filter:drop-shadow(0 14px 30px #172b4b24)}iframe{box-sizing:content-box;display:block;width:440px;border:1px solid #c5cfdf;border-radius:14px;background:white;transform-origin:top left}.dark iframe{border-color:#64503f;background:#1e1a17}.settings .copy{top:232px;width:420px}.settings h1{font-size:50px}.settings .stage{left:526px;top:90px;width:690px}.settings iframe{width:760px}.settings .sources{flex-wrap:wrap;max-width:360px}.settings .footnote{max-width:430px}
+</style></head><body><div class="wash"></div>
+<div class="brand"><img src="/extension/icons/icon-128.png" alt="">Scholar Inbox Companion</div>
+<section class="copy"><div class="eyebrow" id="eyebrow"></div><h1 id="heading"></h1><p id="description"></p><div class="sources" id="sources"></div></section>
+<div class="stage"><iframe id="ui" title="Actual extension interface"></iframe></div>
+<div class="footnote" id="footnote"></div>
+<script>
+const scenes={
+ save:{mode:'light',palette:'blue',eyebrow:'From your browser to your collection',heading:'Save the paper<br>you’re reading.',description:'Add papers to your Scholar Inbox collections<br>without leaving the page.',tags:['arXiv','CVF','OpenReview','PDFs'],page:'/extension/popup.html?preview=1',footnote:'Requires a Scholar Inbox account and an existing browser sign-in.<br>Unofficial companion · Interface shown with example collections.'},
+ collect:{mode:'dark',palette:'scholar',eyebrow:'A place for every paper',heading:'Find the right<br>collection.',description:'Search your collections and choose<br>where each paper belongs.',tags:['Find','Choose','Save'],page:'/extension/popup.html?preview=1',footnote:'Saves papers already indexed by Scholar Inbox.<br>Unofficial companion · Interface shown with example collections.'},
+ settings:{mode:'light',palette:'scholar',eyebrow:'Make it feel like yours',heading:'Your theme.<br>Your palette.',description:'Choose Light, Dark, or System.<br>Pick blue or warm orange accents.',tags:['Light / Dark / System','Two color palettes'],page:'/extension/options.html',footnote:'Open Settings from the popup or Chrome’s Options menu.<br>Unofficial companion for Scholar Inbox.'}
+};
+const key=new URLSearchParams(location.search).get('scene')||'save';const scene=scenes[key];
+localStorage.setItem('appearance',scene.mode);localStorage.setItem('palette',scene.palette);
+document.body.className=[scene.mode==='dark'?'dark':'',key==='settings'?'settings':''].join(' ');
+document.querySelector('#eyebrow').textContent=scene.eyebrow;document.querySelector('#heading').innerHTML=scene.heading;document.querySelector('#description').innerHTML=scene.description;document.querySelector('#footnote').innerHTML=scene.footnote;
+for(const name of scene.tags){const tag=document.createElement('span');tag.textContent=name;document.querySelector('#sources').append(tag)}
+document.querySelector('#ui').src=scene.page;
+</script></body></html>

@@ -8,15 +8,17 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "check": "node --check extension/theme.js && node --check extension/cache.js && node --check extension/timing.js && node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js && node --check scripts/export-icons.mjs",
+    "check": "node --check extension/theme.js && node --check extension/cache.js && node --check extension/timing.js && node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js && node --check scripts/export-icons.mjs && node --check scripts/export-store-assets.mjs",
     "test": "node --test tests/*.test.js",
     "vendor:pdf": "node scripts/vendor-pdf.mjs",
     "measure:popup": "node scripts/measure-popup.mjs",
-    "icons:build": "node scripts/export-icons.mjs"
+    "icons:build": "node scripts/export-icons.mjs",
+    "assets:store": "npm run icons:build && node scripts/export-store-assets.mjs"
   },
   "devDependencies": {
     "linkedom": "0.18.13",
     "pdfjs-dist": "6.3.289",
+    "playwright": "1.62.1",
     "sharp": "0.35.4"
   }
 }

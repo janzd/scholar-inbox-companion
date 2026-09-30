@@ -20,3 +20,7 @@ The popup and Settings headers share the 128px export. No fonts, remote resource
 ## Toolbar framing
 
 The action uses separate toolbar-16.png, toolbar-24.png, toolbar-32.png, and toolbar-48.png exports. Generate these from the same SVG with viewBox="4 4 120 120" instead of viewBox="0 0 128 128". This removes only the transparent outer padding, making the artwork 6.7% larger without changing its proportions. The rounded corners retain transparency. General extension icons and page headers continue to use the original padded exports.
+
+## Store icon
+
+`store-128.png` uses `viewBox="-16 -16 160 160"` to place the 96px square artwork inside a 128px canvas with 16px padding. The manifest’s 128px icon uses this export for installation/store presentation. Header artwork and toolbar exports retain their existing framing. `npm run icons:build` regenerates it alongside the other sizes.
