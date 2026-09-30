@@ -3,7 +3,7 @@
 body{margin:0;width:440px}
 header{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface)}
 
-.brand-icon{display:grid;place-items:center;width:37px;height:37px;background:var(--brand);color:var(--brand-text);border-radius:11px;font:italic 700 26px Georgia,serif}
+.brand-icon{display:block;flex-shrink:0;width:37px;height:37px}
 header strong{display:block;font-size:16px}
 header div span{display:block;font-size:11px;color:var(--muted)}
 
