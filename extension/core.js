@@ -89,7 +89,7 @@ export class ScholarClient {
     } catch {
       throw new Error("Could not reach Scholar Inbox. Check your connection and that you are signed in in this Chrome profile.");
     }
-    if (response.status === 401 || response.status === 403) throw new Error("Sign in to Scholar Inbox in this Chrome profile, then retry. Access may also be restricted by the service.");
+    if (response.status === 401 || response.status === 403) throw Object.assign(new Error("Sign in to Scholar Inbox in this Chrome profile, then retry. Access may also be restricted by the service."), {code:"AUTH_REQUIRED"});
     if (response.status === 429) {
       const seconds = Number(response.headers.get("Retry-After"));
       throw new Error(`Scholar Inbox is limiting requests. ${Number.isFinite(seconds) && seconds > 0 ? `Try again in ${seconds} seconds.` : "Wait before trying again."}`);
@@ -103,7 +103,7 @@ export class ScholarClient {
 
   async session() {
     const data = await this.request("/session_info");
-    if (data.is_logged_in !== true) throw new Error("Sign in to Scholar Inbox in this Chrome profile, then click Retry.");
+    if (data.is_logged_in !== true) throw Object.assign(new Error("Sign in to Scholar Inbox in this Chrome profile, then refresh or click Retry."), {code:"AUTH_REQUIRED"});
   }
 
   async collections() {

@@ -27,3 +27,7 @@ label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:3px
 footer{margin:24px auto 40px;color:var(--muted);font-size:12px}
 [hidden]{display:none!important}
 @media(max-width:540px){header{margin-top:24px}section{padding:18px}.palette-choices{grid-template-columns:1fr}}
+
+.digest-settings{margin-top:24px}.check-option{display:flex;align-items:center;gap:12px;font-size:14px;cursor:pointer}.check-option input{width:17px;height:17px;flex-shrink:0}.digest-settings .help{margin:10px 0 22px}.digest-settings button{font:inherit;font-size:13px;padding:9px 15px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--link);cursor:pointer}.digest-settings button:disabled{color:var(--muted);cursor:default}.digest-settings button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+.check-option:has(input:checked){background:transparent}

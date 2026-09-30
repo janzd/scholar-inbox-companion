@@ -41,7 +41,18 @@
       <p class="help">Changes are saved automatically and apply throughout the extension.</p>
       <p id="theme-feedback" class="feedback" role="status" data-confirm="true" hidden></p>
     </section>
+    <section class="digest-settings" aria-labelledby="digest-heading">
+      <h2 id="digest-heading">Digest notifications</h2>
+      <label class="check-option"><input id="digest-checks" type="checkbox" disabled><span>Check for new digests every 60 minutes</span></label>
+      <p class="help">Show a NEW badge on the extension when today’s digest is available. Opening that digest clears the badge.</p>
+      <label class="check-option"><input id="digest-desktop" type="checkbox" disabled><span>Also show desktop notifications</span></label>
+      <p class="help">Chrome will ask for notification permission. Click a notification to open the digest reader. Checks run while Chrome is running; sleep and system notification settings can delay alerts.</p>
+      <button id="digest-check-now" type="button" disabled>Check now</button>
+      <p id="digest-check-status" class="help" role="status"></p>
+      <p id="digest-feedback" class="feedback" role="status"></p>
+    </section>
   </main>
   <footer>Scholar Inbox Companion · Unofficial companion for Scholar Inbox</footer>
+<script type="module" src="options-alerts.js"></script>
 </body>
 </html>

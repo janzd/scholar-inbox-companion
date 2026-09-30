@@ -1,0 +1,75 @@
+{
+  "paper_id": 4842939,
+  "title": "ReaDiT Guidance: Control for Image and Video Generation using Diffusion Transformer Features",
+  "authors": "Jay Mahajan, Chang Liu, Rauf Makharov, Viraj Shah, Alexander Schwing, Svetlana Lazebnik",
+  "cache_file_name": "Mahajan2026ARXIV_ReaDiT_Guidance_Control_for.pdf",
+  "publication_date": "2026-09-04 00:00:00",
+  "arxiv_id": "2609.04649",
+  "abstract": "We present DiT Readout (ReaDiT) Guidance, a lightweight framework for controlling generation with Diffusion Transformer (DiT) models via their internal feature representations. ReaDiT Guidance uses features from a single DiT block to steer the generative process according to spatial targets - like depth, pose, or edge maps - provided at test time. Furthermore, since modern text-to-video models are largely built on DiT backbones, ReaDiT Guidance naturally extends to video generation, enabling camera and motion control. Experimental results demonstrate that our approach achieves competitive or improved results compared to existing feature-based and off-the-shelf adapter-based approaches while requiring fewer parameters.",
+  "url": "https://arxiv.org/pdf/2609.04649",
+  "teaser_figures": [
+    {
+      "imageUrl": "/teaser_figures/4842939.0.jpeg",
+      "caption": "Table 1. Comparison of DiT Control Approaches. Overview of supported modalities, parameter overhead, training data requirements, and whether the method utilizes Implicit Model Conditioning (i.e., the diffusion model does not process the condition during its forward pass). For ControlNet, parameters for image and video are estimated from SD3-Medium and CogVideoX-5B respectively.",
+      "figureNumber": 0,
+      "figureType": "Table"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.1.jpeg",
+      "caption": "Figure 1. Method Overview. Left: ReaDiT takes a single intermediate feature from the frozen DiT and predicts spatial outputs, which are used to guide image generation by optimizing the latent z t . Right: ReaDiT is trained to predict task-specific outputs from DiT features extracted by noising an input image to timestep t and passing it through the frozen DiT.",
+      "figureNumber": 1,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.2.jpeg",
+      "caption": "Figure 2. Architecture of ReaDiT. Input features are conditioned on t and encoded into multi-resolution feature maps. The feature maps are progressively fused and upsampled to a final feature map, from which a task-specific head produces the spatial output.",
+      "figureNumber": 2,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.3.jpeg",
+      "caption": "Figure 3. Spatial Prediction Results. We compare the prediction of ReaDiT to off-the-shelf models across depth, pose, and edge tasks. ReaDiT produces meaningful predictions from frozen DiT features, which can also be used to monitor spatial properties during the generation process. Additional examples are presented in the supplementary material.",
+      "figureNumber": 3,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.4.jpeg",
+      "caption": "Figure 4. Spatial Image Guidance. Given a target spatial map, the trained ReaDiT guides the generation process to match the specific layout while maintaining image quality and adherence to the text prompt. Each column is generated from a text prompt following a shared format with varying suffixes, e.g ., column1: “A standing [suffix] in a studio”, where key suffixes are annotated in the figure. Full prompts and more results can be found in the supplementary material.",
+      "figureNumber": 4,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.5.jpeg",
+      "caption": "Figure 5. Qualitative Comparison. Guidance of different spatial tasks from ReaDiT compared against RG [19]. Generation guided by ReaDiT follows the target more faithfully even under complex spatial maps. More examples are provided in the supplementary material.",
+      "figureNumber": 5,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.6.jpeg",
+      "caption": "Table 2. Guidance Accuracy Comparison between ReaDiT, RG, and ControlNet. We evaluate under two settings: control maps from generated images (Gen) and from real images (Real). Best model score per setting is bolded ; second best is underlined. ReaDiT outperforms RG across all tasks and metrics under both settings. With significantly fewer parameters, ReaDiT achieves comparable or better accuracy than ControlNet. Furthermore, ReaDiT is complementary to ControlNet, and combining the two further improves performance. We also compare against Flux-based OminiControl and implement our method on Flux.",
+      "figureNumber": 6,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.7.jpeg",
+      "caption": "Figure 6. Spatial Video Guidance. Given a target spatial video input, ReaDiT guides the video generation process to match the specified spatial layout while maintaining visual quality and prompt adherence. Additional examples are shown in the supplementary material.",
+      "figureNumber": 7,
+      "figureType": "Table"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.8.jpeg",
+      "caption": "Figure 7. Motion Video Guidance Results. From left to right: target motion inputs, unguided generation and its captured motion, guided generation and its captured motion. ReaDiT successfully guides video generation to follow the target motion input, as confirmed by the closer correspondence between the motion inputs and motion captured. Without guidance, the generated video fails to reproduce the intended motion.",
+      "figureNumber": 8,
+      "figureType": "Figure"
+    },
+    {
+      "imageUrl": "/teaser_figures/4842939.9.jpeg",
+      "caption": "Figure 8. Consistent Dual Guidance. Depth and pose targets are extracted from the same source image. Compared to single-task guidance, dual guidance better captures both the scene geometry and the human pose.",
+      "figureNumber": 9,
+      "figureType": "Figure"
+    }
+  ],
+  "first_page_image": {
+    "imageUrl": "/first_pages/4842939.jpeg"
+  }
+}

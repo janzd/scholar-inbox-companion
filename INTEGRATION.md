@@ -70,3 +70,34 @@ The bundled timing page can configure a baseline/optimized loading mode and clea
 The user reported an unused OpenReview CSS preload warning attributed to `popup.html`. A local Chrome reproduction isolated HTTP `Link: <...>; rel=preload; as=style` response headers: fetching the response from a document downloaded the stylesheet, whereas fetching the same response in a service worker did not. Parsing an HTML preload tag with the existing detached DOMParser did not download it in that reproduction.
 
 Derived OpenReview and CVF landing-page downloads now run in the extension background worker. The popup still parses the returned HTML and automatically searches the extracted title. The worker accepts only source-plan-derived alternate pages on these supported hosts, retaining the existing size limit, redirect rejection and scoped OpenReview credentials. No new permissions are required. Automated tests cover routing, automatic matching, unsupported URLs and verification/PDF fallbacks; live installed-extension confirmation remains pending.
+
+
+## Digest reader — version 0.6.0, September 30, 2026
+
+The full-page reader reuses the existing session integration rather than requiring an API key. The current public [Scholar Inbox frontend](https://www.scholar-inbox.com/) API module and digest component expose the following read contract:
+
+- `GET /` returns the default digest. `GET /?date=MM-DD-YYYY` selects a day; `p=1` is the second batch, with subsequent integer pages.
+- `digest_df` contains paper records; `from_date` / `to_date` describe the selected range. The reader also accepts the older `current_digest_date` field. `prev_date`, `next_date`, and `has_more_papers_in_digest` control navigation.
+- The reader shows daily digests. If the default response spans a range, it requests the final day before displaying/paging it.
+- Paper detail at `GET /papers/{slug}` exposes `teaser_figures` (`imageUrl`, `caption`, `figureNumber`, `figureType`) and `first_page_image.imageUrl`. Image paths resolve against the website origin, not the API origin.
+
+The reader checks the current session before each digest/detail operation and validates enriched records against both paper ID and slug. Only its exact extension page can call the digest worker routes; that page cannot call save, lookup, or diagnostic routes. Responses discard personal fields unrelated to rendering. Images are restricted to public Scholar Inbox figure/first-page paths for the corresponding paper ID. No credentials are read, API keys stored, or permissions added.
+
+Abstracts are used directly. Missing abstracts/figures trigger lazy detail reads with concurrency capped at two. Account-dependent content remains in page memory; appearance settings and existing popup diagnostics/cache are separate. The reader performs no collection writes, ratings, read markers, notifications, or scheduled polling.
+
+The contract and real public figure rendering were checked; authenticated retrieval through the installed extension and live date pagination are **not yet verified**. Automated tests exercise mocked responses and must not be interpreted as live account verification. The official API review above remains historical context.
+
+
+## Hourly digest notifications — version 0.6.1
+
+Supersedes the reader-only scheduling scope of version 0.6.0. The user requested checks every 60 minutes. A named Chrome alarm is restored on worker startup if absent; the extension also checks on browser startup. Concurrent checks coalesce, recent automatic checks are throttled, and disabling invalidates an in-flight response.
+
+The poll checks sign-in and fetches only the first batch for today in UTC via `GET /?date=MM-DD-YYYY`. It requires a non-empty `digest_df`, an identifiable `username`, matching explicit digest date fields, and `empty_digest !== true`. It does not fetch figures or paper details. No verified completion/email event was found in the inspected public website contract: this is an availability heuristic, not proof that generation is complete or email was sent. Authenticated readiness semantics still need live validation.
+
+SHA-256 of a namespaced username scopes date receipts without storing raw usernames. At most five account records retain seen, notified, and unread dates in local extension storage. Preferences and last-check status/timestamps are also local; digest bodies are discarded. Account switching uses independent receipts; sign-out clears current indicators without deleting deduplication history.
+
+The worker persists an announcement receipt before displaying its desktop banner to avoid repeats after a restart. A delivery failure can therefore miss that day's banner; the unread badge remains. Chrome/system denial is handled without an error notification. Desktop permission is optional and requested from the Settings toggle's user gesture. Notifications contain only the digest date and generic text. Clicking one opens that date; the badge clears only after a visible reader acknowledges successfully rendered papers for the same account/date. An older reader cannot clear a newer unread digest.
+
+Settings alone can invoke alert configuration/status/manual-check routes. The reader can acknowledge its displayed digest, and its existing collection write restrictions remain. The manifest adds `alarms` and optional `notifications`, with no new hosts, tab-reading, or cookie permissions.
+
+Chrome references: [alarms and restart/sleep behavior](https://developer.chrome.com/docs/extensions/reference/api/alarms), [notification creation/clicks](https://developer.chrome.com/docs/extensions/reference/api/notifications), and [optional permission requests](https://developer.chrome.com/docs/extensions/reference/api/permissions).
