@@ -57,3 +57,10 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - 43 reader checks and 48 Settings checks pass in isolated Chrome with mocked extension APIs. The reader checks additionally cover dated notification URLs and acknowledgement only while visible. Settings checks exercise enabling/disabling, permission-denial rollback, manual checks, theme/palette application, and narrow layouts. No native notification was sent by these tests.
 - Pending user verification after Reload: turn on desktop notifications in Settings and grant Chrome permission; run Check now while signed in; verify today's readiness signal, native banner delivery/click behavior, badge clearing, and continued checks after Chrome restarts. OS delivery and hourly behavior in the installed extension are not established by fixtures.
 - Public-release permission/privacy descriptions and store screenshots must be refreshed for the notification feature before publishing (#10).
+
+
+# Reader relevance and feedback — version 0.7.0
+
+- Unit checks cover the website score transform (including zero, negative, missing and invalid values), like/dislike/removal, already-applied intent, stale ratings, account/authentication and identity changes, invalid input, uncertain writes/readback, empty POST acknowledgements, and read-only refresh. Reader write routes reject other page senders.
+- 51 isolated Chrome reader checks pass, including like/removal/dislike pressed states, relevance display, uncertain-result blocking, and refresh without repeating the write, alongside existing figure/date/appearance coverage. Previews use a synthetic score and rating state, clearly labeled as design previews.
+- No real paper ratings were submitted. User verification after reloading remains pending.

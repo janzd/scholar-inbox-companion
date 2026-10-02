@@ -76,7 +76,7 @@ export function paperView(paper, expected) {
 export class ScholarClient {
   constructor(fetchFn = globalThis.fetch.bind(globalThis), {cache = new LookupCache()} = {}) { this.fetch = fetchFn; this.cache = cache; }
 
-  async request(path, body) {
+  async request(path, body, {allowEmpty = false} = {}) {
     let response;
     try {
       response = await this.fetch(API + path, {
@@ -96,7 +96,7 @@ export class ScholarClient {
     }
     if (!response.ok) throw Object.assign(new Error(`Scholar Inbox returned an error (${response.status}). Please try again later.`), {status: response.status});
     let data;
-    try { data = await response.json(); } catch { throw new Error("Scholar Inbox returned an unexpected response."); }
+    try { if(allowEmpty){const text=await response.text();data=text.trim()?JSON.parse(text):{};}else data = await response.json(); } catch { throw new Error("Scholar Inbox returned an unexpected response."); }
     if (data.success === false) throw new Error("Scholar Inbox could not complete this request. Please check your sign-in and try again.");
     return data;
   }
