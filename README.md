@@ -130,6 +130,10 @@ The extension currently uses Scholar Inbox’s internal website API. Changes to 
 
 ## Development
 
+GitHub Actions runs **Syntax and unit tests** and **Reader and Settings browser tests** on every pull request and push to `main`. Both checks use Node.js 22 and dependencies from the lockfile. Browser tests use Playwright-managed Chromium with mocked extension APIs and account responses; no credentials or live account writes are involved. Runs can also be started manually from the Actions tab once the workflow is on `main`.
+
+To reproduce the CI browser setup locally, run `npx playwright install chromium`, then prefix each browser test command below with `DIGEST_TEST_BROWSER_CHANNEL=chromium` (Linux runners also need `--with-deps` when installing).
+
 Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a DOM test environment, and icon/store asset export tooling.
 
 ```sh
