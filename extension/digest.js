@@ -76,9 +76,21 @@ function showFigure(visual, paper) {
   });
   visual.append(open, controls, caption, imageNote); update();
 }
+function feedbackButton(label,down=false){
+  const button=element('button','rating-icon');
+  button.setAttribute('aria-label',label);button.title=label;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+  svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+  svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+  const path=document.createElementNS(svg.namespaceURI,'path');
+  path.setAttribute('d','M7 10v11H3V10h4Zm0 0 5-8a3 3 0 0 1 2 3v4h5a2 2 0 0 1 2 2.4l-1.4 7A3 3 0 0 1 16.7 21H7');
+  if(down)path.setAttribute('transform','rotate(180 12 12)');
+  svg.append(path);button.append(svg);return button;
+}
 function renderFeedback(paper,token){
   const area=element('div','paper-feedback');area.setAttribute('aria-label','Paper feedback');
-  const like=element('button','','Like'),dislike=element('button','','Dislike'),refresh=element('button','rating-refresh','Refresh rating');
+  const like=feedbackButton('Like'),dislike=feedbackButton('Dislike',true),refresh=element('button','rating-refresh','Refresh rating');
   for(const button of [like,dislike,refresh])button.type='button';
   const note=element('span','rating-status');note.setAttribute('role','status');
   let rating=paper.rating,busy=false,blocked=false;
@@ -114,8 +126,13 @@ function renderPaper(paper, token) {
   if (paper.url) links.append(external('Read paper ↗',paper.url));
   links.append(external('Scholar Inbox ↗',paper.scholarUrl));
   const metaRow=element('div','paper-meta-row');
-  const score=element('span','relevance-score',paper.relevanceScore==null?'Relevance unavailable':`Relevance ${paper.relevanceScore}`);
-  score.title='Relevance score as displayed by Scholar Inbox';
+  const score=element('span','relevance-score',paper.relevanceScore==null?'—':String(paper.relevanceScore));
+  score.title=paper.relevanceScore==null?'Relevance unavailable':`Relevance: ${paper.relevanceScore}`;
+  score.setAttribute('aria-label',score.title);
+  if(paper.relevanceScore!=null){
+    score.dataset.direction=paper.relevanceScore<0?'negative':'positive';
+    score.style.setProperty('--score-strength',`${Math.min(100,Math.abs(paper.relevanceScore))}%`);
+  }
   metaRow.append(element('p','paper-meta',meta),score);
   content.append(metaRow,heading,element('p','authors',paper.authors),element('p','abstract-label','Abstract'),abstract,links,renderFeedback(paper,token));
   const visual = element('div','visual'); showFigure(visual,paper); card.append(content,visual);

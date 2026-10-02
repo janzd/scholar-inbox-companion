@@ -43,6 +43,9 @@ try{
         }
         if(mode==='stale'&&request.date==='2026-09-06')await pause(180);
         const entry={...paper,title:mode==='xss'?'<img src=x onerror="window.injected=true">':request.date||paper.title};
+        if(mode==='negative')entry.relevanceScore=-85;
+        if(mode==='zero')entry.relevanceScore=0;
+        if(mode==='unscored')entry.relevanceScore=null;
         if(mode==='missing'||mode==='queue'){entry.figures=[];entry.firstPage=null;}
         let papers=mode==='empty'?[]:mode==='queue'?Array.from({length:6},(_,i)=>({...entry,paperId:paper.paperId+i})):request.page?[entry,{...entry,paperId:paper.paperId+1}]:[entry];
         return{ok:true,data:{accountKey:'a'.repeat(64),papers,date:request.date||'2026-09-07',page:request.page||0,skipped:0,hasMore:mode==='normal'&&!request.page,previousDate:'2026-09-06',nextDate:null}};
@@ -96,8 +99,21 @@ try{
   await hidden.page.evaluate(()=>{window.testVisibility='visible';document.dispatchEvent(new Event('visibilitychange'));});
   assert.equal(await hidden.page.evaluate(()=>window.requests.filter(r=>r.type==='digestViewed').length),1);
   checks+=4;await hidden.context.close();
+  for(const mode of ['normal','negative','zero','unscored']){
+    const {page,context}=await open(mode);
+    const badge=page.locator('.relevance-score');
+    assert.equal(await badge.textContent(),{normal:'87',negative:'-85',zero:'0',unscored:'—'}[mode]);
+    assert.equal(await badge.getAttribute('aria-label'),mode==='unscored'?'Relevance unavailable':`Relevance: ${{normal:87,negative:-85,zero:0}[mode]}`);
+    assert.equal(await page.getByRole('button',{name:'Like',exact:true}).locator('svg').count(),1);
+    assert.equal(await page.getByRole('button',{name:'Dislike',exact:true}).textContent(),'');
+    if(mode!=='unscored'){
+      const rgb=await badge.evaluate(e=>getComputedStyle(e).backgroundColor);
+      assert.notEqual(rgb,'rgba(0, 0, 0, 0)');
+    }
+    checks+=4;await context.close();
+  }
   const voting=await open();
-  assert.equal(await voting.page.locator('.relevance-score').textContent(),'Relevance 87');
+  assert.equal(await voting.page.locator('.relevance-score').textContent(),'87');
   const like=voting.page.getByRole('button',{name:'Like',exact:true}),dislike=voting.page.getByRole('button',{name:'Dislike',exact:true});
   await like.click();await voting.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='Liked');assert.equal(await like.getAttribute('aria-pressed'),'true');
   await like.click();await voting.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='No rating');assert.equal(await like.getAttribute('aria-pressed'),'false');
