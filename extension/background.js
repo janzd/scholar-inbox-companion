@@ -1,3 +1,4 @@
+import {readFeedback,rateFeedback} from "./digest-feedback.js";
 import {registerDigestAlerts} from "./digest-alerts.js";
 import {digestDate, loadDigest, loadDigestDetail} from "./digest-core.js";
 import {ScholarClient} from "./core.js";
@@ -6,21 +7,29 @@ import {sourcePlan, fetchPublic} from "./sources.js";
 const cache = new LookupCache({storage: chrome.storage?.session});
 const client = new ScholarClient(undefined, {cache});
 let saving = false;
+const ratingWrites = new Set();
 const alerts = chrome.alarms ? registerDigestAlerts(chrome,client) : null;
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
-  // Each extension page has a narrow route allowlist. The digest is read-only.
+  // Each extension page has a narrow route allowlist. Only the reader can submit explicit paper ratings.
   if (sender.id !== chrome.runtime.id) return false;
   const diagnostic = sender.url === chrome.runtime.getURL("benchmark.html");
   const digestURL = chrome.runtime.getURL("digest.html");
   const digest = sender.url === digestURL || (sender.url?.startsWith(digestURL+"?date=") && !!digestDate(new URL(sender.url).searchParams.get("date")));
   const settings = sender.url === chrome.runtime.getURL("options.html");
   const popup = sender.url === chrome.runtime.getURL("popup.html");
-  const allowed = settings ? ["digestAlertStatus", "digestAlertSettings", "digestAlertCheck"] : digest ? ["digest", "digestDetail", "digestViewed"] : diagnostic ? ["benchmarkMode"] : popup
+  const allowed = settings ? ["digestAlertStatus", "digestAlertSettings", "digestAlertCheck"] : digest ? ["digest", "digestDetail", "digestViewed", "digestRating", "digestRatingRead"] : diagnostic ? ["benchmarkMode"] : popup
     ? ["metadata", "landingPage", "lookup", "resolve", "choose", "save"] : [];
   if (!allowed.includes(message?.type)) return false;
   (async () => {
     switch (message?.type) {
+      case "digestRatingRead": return await readFeedback(client,message.values);
+      case "digestRating": {
+        const key=message.values?.paper?.paperId;
+        if(ratingWrites.has(key))throw new Error("A rating is already being saved for this paper.");
+        ratingWrites.add(key);
+        try{return await rateFeedback(client,message.values);}finally{ratingWrites.delete(key);}
+      }
       case "digestAlertStatus": return await alerts.status();
       case "digestAlertSettings": {
         const result=await alerts.configure(message.values);

@@ -1,6 +1,6 @@
 {
   "name": "scholar-inbox-companion",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "description": "Save papers to Scholar Inbox collections and browse your digest with abstracts and figures.",
   "type": "module",
@@ -8,7 +8,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "check": "node --check extension/theme.js && node --check extension/cache.js && node --check extension/timing.js && node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js && node --check scripts/export-icons.mjs && node --check scripts/export-store-assets.mjs && node --check extension/digest-core.js && node --check extension/digest.js && node --check extension/digest-preview.js && node --check scripts/test-digest-reader.mjs && node --check extension/digest-alerts.js && node --check extension/options-alerts.js && node --check scripts/test-alerts-ui.mjs",
+    "check": "node --check extension/theme.js && node --check extension/cache.js && node --check extension/timing.js && node --check extension/core.js && node --check extension/sources.js && node --check extension/pdf.js && node --check extension/background.js && node --check extension/popup.js && node --check extension/benchmark.js && node --check scripts/export-icons.mjs && node --check scripts/export-store-assets.mjs && node --check extension/digest-core.js && node --check extension/digest.js && node --check extension/digest-preview.js && node --check scripts/test-digest-reader.mjs && node --check extension/digest-alerts.js && node --check extension/options-alerts.js && node --check scripts/test-alerts-ui.mjs && node --check extension/digest-feedback.js",
     "test": "node --test tests/*.test.js",
     "vendor:pdf": "node scripts/vendor-pdf.mjs",
     "measure:popup": "node scripts/measure-popup.mjs",

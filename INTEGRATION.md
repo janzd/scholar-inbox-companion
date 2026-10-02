@@ -101,3 +101,14 @@ The worker persists an announcement receipt before displaying its desktop banner
 Settings alone can invoke alert configuration/status/manual-check routes. The reader can acknowledge its displayed digest, and its existing collection write restrictions remain. The manifest adds `alarms` and optional `notifications`, with no new hosts, tab-reading, or cookie permissions.
 
 Chrome references: [alarms and restart/sleep behavior](https://developer.chrome.com/docs/extensions/reference/api/alarms), [notification creation/clicks](https://developer.chrome.com/docs/extensions/reference/api/notifications), and [optional permission requests](https://developer.chrome.com/docs/extensions/reference/api/permissions).
+
+
+## Reader relevance and ratings — version 0.7.0, October 2, 2026
+
+The public website paper display module computes its relevance label as `Math.round(Number((100 * (2 * ranking_score - 1)).toFixed(2)))`. The reader uses that same display, not a percentage, preserves the digest ordering, and treats missing/nonfinite/out-of-range scores as unavailable. Preview scores are explicitly synthetic example values.
+
+The public frontend submits `POST /make_rating/` with `{rating: 1 | -1 | 0, id: "PAPER_ID"}`: like, dislike, or removal. Existing selection is exposed through `paper.rating`; a supplied null means unrated, whereas an omitted field is treated as unknown. The source was checked in the public `paper-display-DdeOzx_T.js` and `api-BqsIjoOc.js` bundles on [Scholar Inbox](https://www.scholar-inbox.com/).
+
+Reader-only worker routes now support explicit rating writes and refreshes. Preflight verifies login, the original digest account hash, paper ID/slug, and the current rating. Session username is used when present; otherwise the current digest supplies it. Stale/conflicting state requires a refresh. A per-paper write lock prevents overlap, the mutation is never automatically retried, and a fresh account/detail read confirms the result. An empty successful POST response is allowed because confirmation comes from the independent read; HTTP failures and explicit JSON failures remain errors. Uncertain outcomes pause further votes until a read-only refresh. Collection write routes remain restricted to the popup.
+
+Unlike the website handler, the reader does not separately mark a rated paper as read. Rating values are neither persisted locally nor transmitted to another service. No new permissions are added. Public frontend inspection and mocked validation do not establish live write behavior: no account ratings were submitted during development.

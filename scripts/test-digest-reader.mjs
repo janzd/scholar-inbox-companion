@@ -8,7 +8,7 @@ import {digestPaper} from '../extension/digest-core.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../extension');
 const raw=JSON.parse(await readFile(resolve(root,'digest-preview-data.json'),'utf8'));
-const paper=digestPaper(Array.isArray(raw)?raw[0]:raw);
+const paper={...digestPaper(Array.isArray(raw)?raw[0]:raw),rating:0,relevanceScore:87};
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png'};
 const server=createServer(async(req,res)=>{try{
   const path=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
@@ -26,12 +26,14 @@ try{
     await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="white"/><text x="60" y="200">Test figure</text></svg>'}));
     await context.addInitScript(({paper,mode,theme,palette})=>{
       localStorage.setItem('appearance',theme);localStorage.setItem('palette',palette);
-      window.requests=[];
+      window.requests=[];window.testRating=0;
       if(mode==='hidden'){window.testVisibility='hidden';Object.defineProperty(document,'visibilityState',{get:()=>window.testVisibility});}
       window.activeDetails=0;window.maxDetails=0;
       const pause=ms=>new Promise(r=>setTimeout(r,ms));
       window.chrome={runtime:{id:'test-extension',sendMessage:async request=>{
         window.requests.push(request);
+        if(request.type==='digestRating'){if(mode==='rating-error')return {ok:false,error:'Could not confirm. Refresh rating.',errorCode:'RATING_UNCERTAIN'};window.testRating=request.values.rating;return {ok:true,data:{rating:window.testRating}};}
+        if(request.type==='digestRatingRead')return {ok:true,data:{rating:window.testRating}};
         if(request.type==='digestViewed')return{ok:true,data:{}};
         if(mode==='signed-out')return{ok:false,error:'Sign in to Scholar Inbox, then refresh.',errorCode:'AUTH_REQUIRED'};
         if(mode==='error')return{ok:false,error:'Could not load your digest.'};
@@ -94,6 +96,21 @@ try{
   await hidden.page.evaluate(()=>{window.testVisibility='visible';document.dispatchEvent(new Event('visibilitychange'));});
   assert.equal(await hidden.page.evaluate(()=>window.requests.filter(r=>r.type==='digestViewed').length),1);
   checks+=4;await hidden.context.close();
+  const voting=await open();
+  assert.equal(await voting.page.locator('.relevance-score').textContent(),'Relevance 87');
+  const like=voting.page.getByRole('button',{name:'Like',exact:true}),dislike=voting.page.getByRole('button',{name:'Dislike',exact:true});
+  await like.click();await voting.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='Liked');assert.equal(await like.getAttribute('aria-pressed'),'true');
+  await like.click();await voting.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='No rating');assert.equal(await like.getAttribute('aria-pressed'),'false');
+  await dislike.click();await voting.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='Disliked');assert.equal(await dislike.getAttribute('aria-pressed'),'true');
+  await voting.context.close();
+  const failedVote=await open('rating-error');await failedVote.page.getByRole('button',{name:'Like',exact:true}).click();
+  await failedVote.page.getByText('Could not confirm. Refresh rating.',{exact:true}).waitFor();
+  assert.equal(await failedVote.page.getByRole('button',{name:'Like',exact:true}).isDisabled(),true);
+  assert.equal(await failedVote.page.getByRole('button',{name:'Like',exact:true}).getAttribute('aria-pressed'),'false');
+  await failedVote.page.getByRole('button',{name:'Refresh rating',exact:true}).click();await failedVote.page.waitForFunction(()=>document.querySelector('.rating-status').textContent==='No rating');
+  assert.equal(await failedVote.page.evaluate(()=>window.requests.filter(r=>r.type==='digestRating').length),1);
+  assert.equal(await failedVote.page.getByRole('button',{name:'Like',exact:true}).isEnabled(),true);
+  checks+=8;await failedVote.context.close();
   const broken=await open();
   await broken.context.route('https://www.scholar-inbox.com/**',route=>route.abort());
   await broken.page.reload();await broken.page.getByText('This image could not be loaded. Try another figure or open the paper.',{exact:true}).waitFor();checks++;
