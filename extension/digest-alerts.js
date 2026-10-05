@@ -10,12 +10,14 @@ const validKey=key=>typeof key==='string'&&/^[a-f0-9]{64}$/.test(key);
 export async function inspectDailyDigest(client, now) {
   const today=new Date(now).toISOString().slice(0,10);
   await client.session();
-  const raw=await client.request(digestQuery({date:today}));
+  let raw=await client.request(digestQuery());
+  // Follow the reader's Latest selection, including a saved range's final day.
+  const from=digestDate(raw.from_date),to=digestDate(raw.to_date);
+  if(from&&to&&from!==to)raw=await client.request(digestQuery({date:to}));
   const accountKey=await digestAccount(raw.username);
   if(!accountKey)throw Object.assign(new Error('The digest account could not be identified.'),{code:'UNRECOGNIZED'});
-  const dates=[raw.current_digest_date,raw.from_date,raw.to_date].filter(v=>v!=null&&v!=='').map(digestDate);
   const data=normalizeDigest(raw);
-  return {accountKey,date:today,ready:dates.length>0&&dates.every(date=>date===today)&&raw.empty_digest!==true&&data.papers.length>0};
+  return {accountKey,date:today,ready:data.date===today&&raw.empty_digest!==true&&data.papers.length>0};
 }
 
 export class DigestAlerts {
@@ -89,9 +91,10 @@ export class DigestAlerts {
           if(epoch!==this.epoch)return;
           if(allowed){
             // Persist before displaying to avoid repeat alerts after worker restarts.
+            const previousNotifiedDate=record.notifiedDate;
             record.notifiedDate=result.date;await this.save(state);
             try{await this.api.notifications.create(ALERT_NOTIFICATION,{type:'basic',iconUrl:this.api.runtime.getURL('icons/icon-128.png'),title:'Your Scholar Inbox digest is ready',message:`New papers for ${result.date}. Click to open your digest.`});}
-            catch{state.status='notification-blocked';}
+            catch{record.notifiedDate=previousNotifiedDate;state.status='notification-blocked';}
           }else state.status='notification-blocked';
         }
       }

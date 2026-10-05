@@ -44,6 +44,16 @@ export function figureUrl(value, paperId, firstPage = false) {
   } catch { return null; }
 }
 
+export function relevanceScore(value) {
+  if(!['number','string'].includes(typeof value)||(typeof value==='string'&&!value.trim()))return null;
+  const score=Number(value);
+  return Number.isFinite(score)&&score>=0&&score<=1?Math.round(Number((100*(2*score-1)).toFixed(2))):null;
+}
+export function paperRating(raw) {
+  if(!Object.hasOwn(raw,'rating'))return null;
+  if(raw.rating===null)return 0;
+  return [0,1,-1].includes(raw.rating)?raw.rating:null;
+}
 export function digestPaper(raw) {
   const identity = candidateView(raw);
   const figures = [];
@@ -57,7 +67,7 @@ export function digestPaper(raw) {
   // Prefer an actual figure over a table for the initial preview.
   figures.sort((a,b) => Number(a.label === 'Table') - Number(b.label === 'Table'));
   const firstPage = figureUrl(raw.first_page_image?.imageUrl, identity.paperId, true);
-  return {...identity, abstract:String(raw.abstract ?? '').slice(0,30000), url:paperUrl(raw.url) || (identity.arxivId ? `https://arxiv.org/abs/${identity.arxivId}` : null),
+  return {...identity, relevanceScore:relevanceScore(raw.ranking_score),rating:paperRating(raw), abstract:String(raw.abstract ?? '').slice(0,30000), url:paperUrl(raw.url) || (identity.arxivId ? `https://arxiv.org/abs/${identity.arxivId}` : null),
     scholarUrl:`${SITE}/paper/${identity.slug}`, published:digestDate(raw.publication_date), figures,
     firstPage:firstPage ? {url:firstPage, caption:'First page of the paper. Scholar Inbox did not provide a figure preview.', label:'First page', number:null} : null};
 }

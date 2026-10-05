@@ -59,7 +59,14 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - Public-release permission/privacy descriptions and store screenshots must be refreshed for the notification feature before publishing (#10).
 
 
-# Slack wiring — version 0.6.2
+# Reader relevance and feedback — version 0.7.0
+
+- Unit checks cover the website score transform (including zero, negative, missing and invalid values), like/dislike/removal, already-applied intent, stale ratings, account/authentication and identity changes, invalid input, uncertain writes/readback, empty POST acknowledgements, and read-only refresh. Reader write routes reject other page senders.
+- 51 isolated Chrome reader checks pass, including like/removal/dislike pressed states, relevance display, uncertain-result blocking, and refresh without repeating the write, alongside existing figure/date/appearance coverage. Previews use a synthetic score and rating state, clearly labeled as design previews.
+- No real paper ratings were submitted. User verification after reloading remains pending.
+
+
+# Slack wiring — version 0.8.0
 
 - Unit tests use a deliberately fake webhook and an injected fetch stub. They cover URL restriction, secret redaction, trusted storage, offline disabled setup, permission checks, account binding, generic payloads, credential/redirect policy, persistent duplicate suppression, failed/uncertain results, and sender allowlists. Scheduler integration verifies unread-only delivery independent of desktop notifications.
 - Settings browser tests mock the extension APIs and block external network requests. They exercise saving disabled, masked/cleared inputs, enabling, removing configuration, and narrow layouts in both themes/palettes.

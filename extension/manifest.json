@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Scholar Inbox Companion",
-  "version": "0.6.2",
+  "version": "0.8.0",
   "description": "Save papers to Scholar Inbox collections and browse your personalized digest with abstracts and figures.",
   "permissions": [
     "activeTab",

@@ -76,6 +76,46 @@ function showFigure(visual, paper) {
   });
   visual.append(open, controls, caption, imageNote); update();
 }
+function feedbackButton(label,down=false){
+  const button=element('button','rating-icon');
+  button.setAttribute('aria-label',label);button.title=label;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+  svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+  svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+  const path=document.createElementNS(svg.namespaceURI,'path');
+  path.setAttribute('d','M7 10v11H3V10h4Zm0 0 5-8a3 3 0 0 1 2 3v4h5a2 2 0 0 1 2 2.4l-1.4 7A3 3 0 0 1 16.7 21H7');
+  if(down)path.setAttribute('transform','rotate(180 12 12)');
+  svg.append(path);button.append(svg);return button;
+}
+function renderFeedback(paper,token){
+  const area=element('div','paper-feedback');area.setAttribute('aria-label','Paper feedback');
+  const like=feedbackButton('Like'),dislike=feedbackButton('Dislike',true),refresh=element('button','rating-refresh','Refresh rating');
+  for(const button of [like,dislike,refresh])button.type='button';
+  const note=element('span','rating-status');note.setAttribute('role','status');
+  let rating=paper.rating,busy=false,blocked=false;
+  const accountKey=currentData?.accountKey;
+  function render(){
+    like.setAttribute('aria-pressed',String(rating===1));dislike.setAttribute('aria-pressed',String(rating===-1));
+    like.disabled=dislike.disabled=busy||blocked||(!preview&&!accountKey);refresh.disabled=busy||(!preview&&!accountKey);
+    refresh.hidden=!blocked;
+  }
+  async function run(value,readOnly=false){
+    if(busy)return;busy=true;note.textContent=readOnly?'Checking rating…':'Saving rating…';render();
+    try{
+      const data=await send(readOnly?'digestRatingRead':'digestRating',{values:{paper:{paperId:paper.paperId,slug:paper.slug},accountKey,rating:value,expectedRating:rating}});
+      if(token!==generation||!area.isConnected)return;
+      rating=data.rating;blocked=false;note.textContent=rating===1?'Liked':rating===-1?'Disliked':'No rating';
+    }catch(error){
+      if(token!==generation||!area.isConnected)return;
+      blocked=true;note.textContent=error.message;
+      if(error.code==='AUTH_REQUIRED'||error.code==='ACCOUNT_CHANGED'){signedOut(error);return;}
+    }finally{busy=false;render();}
+  }
+  like.addEventListener('click',()=>run(rating===1?0:1));dislike.addEventListener('click',()=>run(rating===-1?0:-1));refresh.addEventListener('click',()=>run(null,true));
+  if(!preview&&!accountKey)note.textContent='Reload the digest to enable ratings.';
+  area.append(like,dislike,refresh,note);render();return area;
+}
 function renderPaper(paper, token) {
   const card = element('article','paper-card'); card.dataset.paperId = String(paper.paperId);
   const content = element('div','paper-content');
@@ -85,7 +125,16 @@ function renderPaper(paper, token) {
   const links = element('div','paper-links');
   if (paper.url) links.append(external('Read paper ↗',paper.url));
   links.append(external('Scholar Inbox ↗',paper.scholarUrl));
-  content.append(element('p','paper-meta',meta),heading,element('p','authors',paper.authors),element('p','abstract-label','Abstract'),abstract,links);
+  const metaRow=element('div','paper-meta-row');
+  const score=element('span','relevance-score',paper.relevanceScore==null?'—':String(paper.relevanceScore));
+  score.title=paper.relevanceScore==null?'Relevance unavailable':`Relevance: ${paper.relevanceScore}`;
+  score.setAttribute('aria-label',score.title);
+  if(paper.relevanceScore!=null){
+    score.dataset.direction=paper.relevanceScore<0?'negative':'positive';
+    score.style.setProperty('--score-strength',`${Math.min(100,Math.abs(paper.relevanceScore))}%`);
+  }
+  metaRow.append(element('p','paper-meta',meta),score);
+  content.append(metaRow,heading,element('p','authors',paper.authors),element('p','abstract-label','Abstract'),abstract,links,renderFeedback(paper,token));
   const visual = element('div','visual'); showFigure(visual,paper); card.append(content,visual);
   if (!paper.figures.length || !paper.abstract) {
     let pending = false;

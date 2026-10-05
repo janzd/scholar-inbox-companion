@@ -57,7 +57,11 @@ Click **Your digest** at the bottom of the popup to open the full-page reader. I
 
 Each paper shows its abstract and the figures Scholar Inbox provides. Click a figure to enlarge it, use the arrows to browse figures and tables, and expand long captions. Missing details load as cards approach the viewport, with at most two detail requests in progress. If figures are unavailable, the reader shows a labeled first-page preview when available, or an explicit missing-figure message.
 
-This first version is read-only: browsing does not save, rate, dismiss, or mark papers read. It does not generate summaries. Installed-account retrieval and date navigation still need live user verification; the automated checks use fixtures.
+The relevance badge matches Scholar Inbox’s displayed score, with an explicit unavailable state when no score is supplied. Papers keep the ordering returned by Scholar Inbox.
+
+Use **Like** or **Dislike** to submit feedback directly from the reader. Click the selected rating again to remove it. Controls show success only after the extension checks the account/paper, submits once, and reads the current rating back. If the outcome is uncertain, use **Refresh rating** to check without submitting again. A changed account requires reloading the digest. Browsing alone does not submit ratings or mark papers read in Scholar Inbox.
+
+Installed-account retrieval, date navigation, and rating writes still need live user verification; automated tests use fixtures. No generated summaries or collection-saving controls are included in the reader.
 
 ### Digest notifications
 
@@ -102,7 +106,7 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox, plu
 | `notifications` (optional) | Show desktop alerts only when enabled and permitted. |
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
-| `https://api.scholar-inbox.com/*` | Find papers, read your digest and paper details, load your collections, and save to the collection you select. |
+| `https://api.scholar-inbox.com/*` | Find papers, read your digest and paper details, submit ratings you select, load your collections, and save to the collection you select. |
 
 Digest requests send the requested date and page to Scholar Inbox; detail requests send the paper slug. Digest content stays in the open reader’s memory and is cleared on navigation, refresh, or an authentication error. It is not added to the extension’s lookup cache or local storage. Images load directly from Scholar Inbox’s public figure/first-page paths and may use Chrome’s normal image cache. No extra host permission or API key is required. Hourly checks fetch only the first batch of today’s digest, without figures or detail enrichment; paper content from those checks is discarded.
 
@@ -112,7 +116,7 @@ Appearance preferences are stored in extension-local Web Storage and persist acr
 
 There is no persistent access to all websites and no background scanning of tabs. Enabled hourly checks contact Scholar Inbox independently of the current tab. Page/PDF downloads do not follow redirects. Downloads normally omit credentials; HTTPS OpenReview `/forum?id=…` and `/pdf?id=…` requests let Chrome attach the existing OpenReview session and browser-verification cookies. The extension does not read or copy cookie values, and this exception adds no host or cookie permissions. PDFs are capped at 25 MB with a 20-second download timeout and a 12-second parsing timeout; extraction examines document metadata and the first page. PDF.js and its worker are bundled, with no remote scripts or AI processing.
 
-Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords or API keys. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers.
+Chrome supplies the existing Scholar Inbox session cookie with authenticated requests. The extension does not read cookie values or store passwords or API keys. The paper title is sent to Scholar Inbox for matching; saving sends the matched paper and selected collection identifiers. A reader rating sends the verified paper identifier and your chosen like, dislike, or removal value to Scholar Inbox.
 
 ## Popup loading
 
@@ -136,6 +140,10 @@ The timing page (`benchmark.html` in the installed extension) records up to 20 o
 The extension currently uses Scholar Inbox’s internal website API. Changes to that API may require updates to the extension.
 
 ## Development
+
+GitHub Actions runs **Syntax and unit tests** and **Reader and Settings browser tests** on every pull request and push to `main`. Both checks use Node.js 22 and dependencies from the lockfile. Browser tests use Playwright-managed Chromium with mocked extension APIs and account responses; no credentials or live account writes are involved. Runs can also be started manually from the Actions tab once the workflow is on `main`.
+
+To reproduce the CI browser setup locally, run `npx playwright install chromium`, then prefix each browser test command below with `DIGEST_TEST_BROWSER_CHANNEL=chromium` (Linux runners also need `--with-deps` when installing).
 
 Requires **Node.js 22.13 or newer**. Development dependencies provide PDF.js, a DOM test environment, and icon/store asset export tooling.
 

@@ -19,14 +19,27 @@ test('hourly alarms and badge work by default; worker initialization does not po
   await h.alerts().initialize();assert.equal(h.requests.length,1);
   h.alarm=null;await h.alerts().initialize();assert.equal(h.alarm.periodInMinutes,60);assert.equal(h.requests.length,1);
   h.advance(3600000);await a.check();assert.equal(h.requests.length,2);
-  assert.equal(h.requests[0],'/?date=09-30-2026');
+  assert.equal(h.requests[0],'/');
 });
 
 test('availability requires dated personalized papers; empty, stale, undated and invalid records stay silent',async()=>{
-  for(const change of [{digest_df:[]},{empty_digest:true},{from_date:'2026-09-29'},{from_date:undefined,to_date:undefined},{current_digest_date:'2026-09-29'},{digest_df:[{paper_id:42}]}]){
+  for(const change of [{digest_df:[]},{empty_digest:true},{from_date:'2026-09-29',to_date:'2026-09-29'},{from_date:undefined,to_date:undefined},{current_digest_date:'2026-09-29'},{digest_df:[{paper_id:42}]}]){
     const h=harness();Object.assign(h.response,change);const result=await inspectDailyDigest(h.client,h.now());assert.equal(result.ready,false);
   }
   const h=harness();h.response.username='';await assert.rejects(()=>inspectDailyDigest(h.client,h.now()),e=>e.code==='UNRECOGNIZED');
+});
+
+test('readiness follows Latest and resolves saved ranges to their final day',async()=>{
+  const h=harness();
+  h.response.current_digest_date='2026-09-30';
+  h.response.from_date='2026-09-29';
+  const result=await inspectDailyDigest(h.client,h.now());
+  assert.equal(result.ready,true);
+  assert.deepEqual(h.requests,['/','/?date=09-30-2026']);
+  h.response.current_digest_date='2026-09-29';
+  assert.equal((await inspectDailyDigest(h.client,h.now())).ready,false);
+  h.response.current_digest_date='2026-10-01';
+  assert.equal((await inspectDailyDigest(h.client,h.now())).ready,false);
 });
 
 test('one desktop alert per account and day persists across worker restarts, with no paper/account text stored',async()=>{
@@ -73,13 +86,15 @@ test('network errors remain quiet; logout clears stale indicators; accounts keep
   h.response.username='alice';await a.check(true);assert.equal(h.notifications.length,2);
 });
 
-test('notification denial or delivery failure preserves the badge without repeated banners',async()=>{
+test('notification failure preserves the badge and retries until delivery succeeds',async()=>{
   const h=harness(),a=h.alerts();h.permission=false;
   await assert.rejects(()=>a.configure({enabled:true,desktop:true}),/Allow notifications/);
   h.permission=true;await a.configure({enabled:true,desktop:true});h.level='denied';await a.check();
   assert.equal(h.badge,'NEW');assert.equal(h.notifications.length,0);assert.equal((await a.status()).status,'notification-blocked');
   h.level='granted';h.notificationError=true;await a.check(true);assert.equal(h.badge,'NEW');
-  h.notificationError=false;await a.check(true);assert.equal(h.notifications.length,0);
+  assert.equal((await a.status()).status,'notification-blocked');
+  h.notificationError=false;await h.alerts().check(true);assert.equal(h.notifications.length,1);
+  await h.alerts().check(true);assert.equal(h.notifications.length,1);
 });
 
 test('notification clicks open the announced date and retain the badge until successful reader acknowledgement',async()=>{

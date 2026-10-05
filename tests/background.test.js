@@ -59,7 +59,7 @@ test('background accepts the popup resolve and choose routes and rejects other s
     assert.equal(digest.ok,true); assert.equal(digest.data.papers[0].paperId,42);
     const detail = await new Promise(resolve => listener({type:'digestDetail',paper:{paperId:42,slug:'Example_Paper'}},digestSender,resolve));
     assert.equal(detail.ok,true);
-    for(const type of ['save','choose','resolve','landingPage','benchmarkMode']) assert.equal(listener({type},digestSender,()=>assert.fail('Digest must remain read-only')),false);
+    for(const type of ['save','choose','resolve','landingPage','benchmarkMode']) assert.equal(listener({type},digestSender,()=>assert.fail('Reader must not invoke collection or diagnostic routes')),false);
     assert.equal(listener({type:'digest'},sender,()=>assert.fail('Popup cannot request a digest')),false);
     const settingsSender={id:'test',url:'chrome-extension://test/options.html'};
     const alertStatus=await new Promise(resolve=>listener({type:'digestAlertStatus'},settingsSender,resolve));
@@ -71,6 +71,7 @@ test('background accepts the popup resolve and choose routes and rejects other s
     const dated=await new Promise(resolve=>listener({type:'digest'},{...digestSender,url:digestSender.url+'?date=2026-09-07'},resolve));
     assert.equal(dated.ok,true);
     assert.equal(listener({type:'digest'},{...digestSender,url:digestSender.url+'?date=invalid'},()=>assert.fail('Invalid reader URL')),false);
+    for(const type of ['digestRating','digestRatingRead'])for(const source of [sender,settingsSender,{id:'other',url:digestSender.url}])assert.equal(listener({type},source,()=>assert.fail('Only the reader can rate')),false);
     const diagnosticSender = {id: 'test', url: 'chrome-extension://test/benchmark.html'};
     assert.equal(listener({type: 'save'}, diagnosticSender, () => assert.fail('Timing page must not save')), false);
     assert.equal(listener({type: 'landingPage'}, diagnosticSender, () => assert.fail('Timing page must not fetch pages')), false);
