@@ -112,3 +112,14 @@ The public frontend submits `POST /make_rating/` with `{rating: 1 | -1 | 0, id: 
 Reader-only worker routes now support explicit rating writes and refreshes. Preflight verifies login, the original digest account hash, paper ID/slug, and the current rating. Session username is used when present; otherwise the current digest supplies it. Stale/conflicting state requires a refresh. A per-paper write lock prevents overlap, the mutation is never automatically retried, and a fresh account/detail read confirms the result. An empty successful POST response is allowed because confirmation comes from the independent read; HTTP failures and explicit JSON failures remain errors. Uncertain outcomes pause further votes until a read-only refresh. Collection write routes remain restricted to the popup.
 
 Unlike the website handler, the reader does not separately mark a rated paper as read. Rating values are neither persisted locally nor transmitted to another service. No new permissions are added. Public frontend inspection and mocked validation do not establish live write behavior: no account ratings were submitted during development.
+
+
+## Optional Slack wiring — version 0.8.0
+
+Incoming-webhook delivery is off without explicit Settings configuration and enablement. Only the exact Settings page may read redacted Slack status or change configuration. Configuration changes invalidate a pending poll and serialize with delivery. Enabling requires optional host permission and binds to the current authenticated digest username hash; a later account mismatch suppresses delivery.
+
+Webhook secrets stay in trusted-context local storage, unsynced and unencrypted. Settings never receives the saved URL back. Requests accept only validated HTTPS `hooks.slack.com/services/…` URLs, omit cookies, reject redirects, and time out after ten seconds. Payloads contain a generic notice, validated date, and public Scholar Inbox digest link with unfurling disabled. No Scholar Inbox account identifier or paper metadata is transmitted. Raw webhook URLs, Slack response text, and fetch errors are not logged or exposed.
+
+Each account record now also retains `slackAttemptedDate`. Persist-before-send prevents duplicate attempts after worker restarts; ambiguous failures are not automatically retried. The badge is updated before Slack delivery, and Slack errors cannot stop normal digest behavior. Removing configuration deletes the webhook; Chrome's optional host grant can remain until revoked through Chrome.
+
+The existing hourly scheduler is reused; no separate backend, Slack OAuth flow, direct bot DMs, or real test sends were added. Destination channels and workspace approval are controlled by Slack. [Official webhook documentation](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) informed this adapter.

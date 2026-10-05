@@ -1,3 +1,4 @@
+import {SlackDelivery} from "./slack.js";
 import {readFeedback,rateFeedback} from "./digest-feedback.js";
 import {registerDigestAlerts} from "./digest-alerts.js";
 import {digestDate, loadDigest, loadDigestDetail} from "./digest-core.js";
@@ -8,7 +9,8 @@ const cache = new LookupCache({storage: chrome.storage?.session});
 const client = new ScholarClient(undefined, {cache});
 let saving = false;
 const ratingWrites = new Set();
-const alerts = chrome.alarms ? registerDigestAlerts(chrome,client) : null;
+const slack = new SlackDelivery({api:chrome,client});
+const alerts = chrome.alarms ? registerDigestAlerts(chrome,client,slack) : null;
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   // Each extension page has a narrow route allowlist. Only the reader can submit explicit paper ratings.
@@ -18,11 +20,16 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   const digest = sender.url === digestURL || (sender.url?.startsWith(digestURL+"?date=") && !!digestDate(new URL(sender.url).searchParams.get("date")));
   const settings = sender.url === chrome.runtime.getURL("options.html");
   const popup = sender.url === chrome.runtime.getURL("popup.html");
-  const allowed = settings ? ["digestAlertStatus", "digestAlertSettings", "digestAlertCheck"] : digest ? ["digest", "digestDetail", "digestViewed", "digestRating", "digestRatingRead"] : diagnostic ? ["benchmarkMode"] : popup
+  const allowed = settings ? ["slackStatus", "slackSettings", "digestAlertStatus", "digestAlertSettings", "digestAlertCheck"] : digest ? ["digest", "digestDetail", "digestViewed", "digestRating", "digestRatingRead"] : diagnostic ? ["benchmarkMode"] : popup
     ? ["metadata", "landingPage", "lookup", "resolve", "choose", "save"] : [];
   if (!allowed.includes(message?.type)) return false;
   (async () => {
     switch (message?.type) {
+      case "slackStatus": return await slack.status();
+      case "slackSettings": {
+        alerts.epoch++;
+        return await alerts.serial(()=>slack.configure(message.values));
+      }
       case "digestRatingRead": return await readFeedback(client,message.values);
       case "digestRating": {
         const key=message.values?.paper?.paperId;

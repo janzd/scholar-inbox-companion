@@ -21,7 +21,7 @@ export async function inspectDailyDigest(client, now) {
 }
 
 export class DigestAlerts {
-  constructor({api,client,now=Date.now}){this.api=api;this.client=client;this.now=now;this.tail=Promise.resolve();this.epoch=0;}
+  constructor({api,client,now=Date.now,slack=null}){this.slack=slack;this.api=api;this.client=client;this.now=now;this.tail=Promise.resolve();this.epoch=0;}
   serial(fn){const task=this.tail.then(fn);this.tail=task.catch(()=>{});return task;}
   async read(){
     const stored=await this.api.storage.local.get([ALERT_PREFS,ALERT_STATE]);
@@ -99,6 +99,11 @@ export class DigestAlerts {
         }
       }
       await this.save(state);await this.badge(prefs,state);
+      if(epoch===this.epoch&&result.ready&&(!record.seenDate||record.seenDate<result.date)){
+        // Optional delivery is independent of desktop notification permissions.
+        // A Slack failure must never break the badge or normal reader operation.
+        try{await this.slack?.deliver(result,record,()=>this.save(state),()=>epoch===this.epoch);}catch{}
+      }
     });
     pending.promise=promise;this.pendingCheck=pending;
     promise.finally(()=>{if(this.pendingCheck===pending)this.pendingCheck=null;}).catch(()=>{});
@@ -121,8 +126,8 @@ export class DigestAlerts {
   });}
 }
 
-export function registerDigestAlerts(api,client){
-  const alerts=new DigestAlerts({api,client});
+export function registerDigestAlerts(api,client,slack=null){
+  const alerts=new DigestAlerts({api,client,slack});
   const quiet=promise=>promise.catch(()=>{});
   api.alarms.onAlarm.addListener(alarm=>{if(alarm.name===ALERT_ALARM)quiet(alerts.check(true));});
   api.runtime.onStartup.addListener(()=>quiet(alerts.initialize(true)));

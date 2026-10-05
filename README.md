@@ -73,6 +73,16 @@ Settings also lets you turn hourly checks off, run **Check now**, and see the la
 
 Availability is inferred from a non-empty response explicitly dated today. The website API does not expose a verified generation-complete or email-delivery signal, so notifications may arrive at a different time from email and do not guarantee the entire digest has finished populating.
 
+### Slack setup (optional)
+
+Slack delivery is off until you configure and enable it under **Settings → Slack notifications**. Create an incoming webhook for the intended Slack channel using [Slack’s setup instructions](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/); your workspace may require app approval. Paste its URL into Settings and save. Saving with delivery off sends nothing. The webhook's destination is chosen in Slack; direct bot DMs and OAuth installation are not implemented.
+
+Enabling delivery asks Chrome for optional access to `hooks.slack.com` and binds the connection to the currently signed-in Scholar Inbox account. Leave hourly checks enabled. Future hourly checks or **Check now** can send one generic notice per unread digest date/account, containing the date and a Scholar Inbox website link. No titles, abstracts, figures, account names, or extension-local links are included. Reader, badge, and desktop notifications continue to work without Slack.
+
+The webhook URL is a secret stored in `chrome.storage.local`, restricted to trusted extension contexts. It is not synced or encrypted by the extension, and is never returned to the Settings page after saving or included in logs/errors. **Remove webhook** deletes it and disables delivery. A blank field preserves a saved webhook. Disable and re-enable delivery while signed into another account to change the account binding.
+
+An attempt receipt is saved before posting. Failed or uncertain posts are not automatically retried for that date, even after restarting or replacing the webhook; check Slack before assuming a message failed. Slack delivery has only been tested with mocked requests. No real webhook has been configured or message sent during development.
+
 ### Appearance
 
 Use the centered icon switch at the bottom of the popup: **sun** for Light, **moon** for Dark, and **monitor** for System (the default). System follows your operating system’s appearance, including changes while the popup is open. Right-click the extension’s toolbar icon and choose **Options** to open Settings in a new tab. You can also use the Settings icon beside the popup’s theme switch.
@@ -85,13 +95,14 @@ If you cloned the repository, run `git pull --ff-only` from its folder. If you d
 
 ## Privacy and permissions
 
-Requests go directly to the current paper website, arXiv, and Scholar Inbox. There is no separate backend, analytics service, or AI service involved in the current extension.
+Requests go directly to the current paper website, arXiv, and Scholar Inbox, plus Slack only when Slack delivery is configured and enabled. There is no separate backend, analytics service, or AI service involved in the current extension.
 
 | Permission | Purpose |
 | --- | --- |
 | `activeTab` | Temporarily access the tab you click on: read its URL and download public paper pages/PDFs from its origin. |
 | `storage` | Keep a bounded record-lookup cache and timing diagnostics in browser-session memory, plus notification preferences and bounded date/account receipts locally. |
 | `alarms` | Schedule a check every 60 minutes while enabled. |
+| `https://hooks.slack.com/*` (optional) | Post generic digest notifications to the webhook you configure and enable. |
 | `notifications` (optional) | Show desktop alerts only when enabled and permitted. |
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
@@ -99,7 +110,7 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox. The
 
 Digest requests send the requested date and page to Scholar Inbox; detail requests send the paper slug. Digest content stays in the open reader’s memory and is cleared on navigation, refresh, or an authentication error. It is not added to the extension’s lookup cache or local storage. Images load directly from Scholar Inbox’s public figure/first-page paths and may use Chrome’s normal image cache. No extra host permission or API key is required. Hourly checks fetch only the first batch of today’s digest, without figures or detail enrichment; paper content from those checks is discarded.
 
-Notification preferences, last-check status/timestamps, and date receipts for up to five accounts are stored in `chrome.storage.local`. Accounts are distinguished using a SHA-256 hash of the service’s username; no raw username, paper content, or credentials are stored there. This is a pseudonymous identifier, not an anonymity guarantee. Date receipts survive browser restarts to prevent duplicate alerts.
+Notification preferences, optional Slack configuration (including its secret webhook URL and bound account hash), last-check status/timestamps, and date receipts for up to five accounts are stored in `chrome.storage.local`. Accounts are distinguished using a SHA-256 hash of the service’s username; no raw Scholar Inbox username, paper content, or Scholar Inbox credentials are stored there. The optional Slack webhook secret is the credential exception described above. This is a pseudonymous identifier, not an anonymity guarantee. Date receipts survive browser restarts to prevent duplicate alerts.
 
 Appearance preferences are stored in extension-local Web Storage and persist across browser restarts. They contain only the mode (`light`, `dark`, or `system`) and palette (`blue` or `scholar`) and are never sent to a website.
 
