@@ -18,7 +18,7 @@ try{
       localStorage.setItem('appearance',theme);localStorage.setItem('palette',palette);
       window.slack={configured:false,enabled:false,status:'not-configured'};
       window.pref={enabled:true,desktop:false,permission:false,status:'pending',lastChecked:0};window.deny=false;window.requested=0;window.messages=[];
-      window.chrome={runtime:{id:'test',sendMessage:async({type,values})=>{window.messages.push({type,values});if(type==='slackStatus')return{ok:true,data:{...window.slack}};if(type==='slackSettings'){window.slack=values.remove?{configured:false,enabled:false,status:'not-configured'}:{configured:true,enabled:values.enabled,status:values.enabled?'enabled':'disabled'};return{ok:true,data:{...window.slack}};}if(type==='digestAlertSettings')Object.assign(window.pref,values);if(type==='digestAlertCheck'){window.pref.status='waiting';window.pref.lastChecked=Date.now();}return{ok:true,data:{...window.pref}};}},permissions:{request:async()=>{window.requested++;window.pref.permission=!window.deny;return !window.deny;}}};
+      window.chrome={runtime:{id:'test',sendMessage:async({type,values})=>{window.messages.push({type,values});if(type==='slackStatus')return{ok:true,data:{...window.slack}};if(type==='slackSettings'){window.slack=values.remove?{configured:false,enabled:false,status:'not-configured'}:{configured:true,mode:values.mode,userId:values.userId,enabled:values.enabled,status:values.enabled?'enabled':'disabled'};return{ok:true,data:{...window.slack}};}if(type==='digestAlertSettings')Object.assign(window.pref,values);if(type==='digestAlertCheck'){window.pref.status='waiting';window.pref.lastChecked=Date.now();}return{ok:true,data:{...window.pref}};}},permissions:{request:async()=>{window.requested++;window.pref.permission=!window.deny;return !window.deny;}}};
     },{theme,palette});
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/options.html');
     await page.waitForFunction(()=>!document.querySelector('#digest-checks').disabled);
@@ -42,10 +42,22 @@ try{
     await page.getByText('Saved. No Slack messages will be sent.',{exact:true}).waitFor();
     assert.equal(await page.locator('#slack-webhook').inputValue(),'');assert.equal(await page.locator('#slack-enabled').isChecked(),false);
     await page.evaluate(()=>{window.deny=false;});await page.locator('#slack-enabled').check();
-    await page.getByRole('button',{name:'Save Slack settings',exact:true}).click();await page.getByText(/Future hourly checks or Check now can post/).waitFor();
+    await page.getByRole('button',{name:'Save Slack settings',exact:true}).click();await page.getByText(/Future hourly checks or Check now can send/).waitFor();
     assert.equal(await page.locator('#slack-enabled').isChecked(),true);
-    await page.locator('#slack-remove').click();await page.getByText('Webhook removed and delivery disabled.',{exact:true}).waitFor();
+    await page.locator('#slack-remove').click();await page.getByText('Connection removed and delivery disabled.',{exact:true}).waitFor();
     assert.equal(await page.locator('#slack-enabled').isChecked(),false);assert.equal(await page.locator('#slack-remove').isDisabled(),true);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);count+=6;
+    await page.locator('#slack-mode').selectOption('dm');
+    assert.equal(await page.locator('#slack-webhook').isVisible(),false);
+    await page.locator('#slack-token').fill('xoxb-DEMO-NOT-A-REAL-BOT-TOKEN');
+    await page.locator('#slack-user').fill('U0123456789');
+    await page.locator('#slack-enabled').check();
+    await page.getByRole('button',{name:'Save Slack settings',exact:true}).click();
+    await page.getByText(/Future hourly checks or Check now can send/).waitFor();
+    assert.equal(await page.locator('#slack-mode').inputValue(),'dm');
+    assert.equal(await page.locator('#slack-token').inputValue(),'');
+    assert.equal(await page.locator('#slack-user').inputValue(),'U0123456789');
+    assert.equal(await page.locator('#slack-token').getAttribute('type'),'password');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);count+=6;
     if(process.env.ALERTS_SCREENSHOT_DIR&&palette==='blue'){
       await mkdir(process.env.ALERTS_SCREENSHOT_DIR,{recursive:true});await page.setViewportSize({width:960,height:1200});

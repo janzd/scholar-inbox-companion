@@ -53,14 +53,22 @@
     </section>
     <section class="digest-settings" aria-labelledby="slack-heading">
       <h2 id="slack-heading">Slack notifications</h2>
-      <p class="help">Optional setup for an incoming webhook. Messages go to the channel chosen in Slack, including a private channel if permitted. Direct bot DMs are not included. Your workspace may require app approval.</p>
+      <p class="help">Choose a channel webhook or a direct message from your Slack bot. Your workspace may require app approval.</p>
       <form id="slack-form">
-        <label for="slack-webhook">Incoming webhook URL</label>
+        <label for="slack-mode">Send to</label>
+        <select id="slack-mode" disabled><option value="webhook">Channel webhook</option><option value="dm">Direct message</option></select>
+        <div id="slack-dm-fields" hidden>
+          <label for="slack-token">Bot token</label><input id="slack-token" type="password" autocomplete="off" spellcheck="false" placeholder="xoxb-…" disabled>
+          <label for="slack-user">Your Slack member ID</label><input id="slack-user" type="text" autocomplete="off" spellcheck="false" placeholder="U0123456789" disabled>
+          <p class="help">Install your Slack app with chat:write and im:write bot permissions. Copy its Bot User OAuth Token from OAuth &amp; Permissions. In Slack, copy your member ID from your profile’s menu. No message-reading permissions are needed.</p>
+        </div>
+        <div id="slack-webhook-fields"><label for="slack-webhook">Incoming webhook URL</label>
         <input id="slack-webhook" type="password" autocomplete="off" spellcheck="false" placeholder="https://hooks.slack.com/services/…" disabled>
-        <p class="help">Stored only in this Chrome profile, not synced or encrypted by the extension. Treat the URL as a secret. Leaving it blank keeps the saved webhook.</p>
+        <p class="help">Stored only in this Chrome profile, not synced or encrypted by the extension. Treat the URL as a secret. Leaving it blank keeps the saved webhook.</p></div>
+        <p class="help">Bot tokens are also stored locally, not synced or encrypted by the extension. Leave the token blank to keep it. Switching delivery methods replaces the previous connection.</p>
         <label class="check-option"><input id="slack-enabled" type="checkbox" disabled><span>Enable Slack notifications</span></label>
         <p class="help">Uses the Scholar Inbox account signed in when enabled. Hourly checks must also be on. Future checks can post a generic digest notice and a Scholar Inbox link; no paper titles or abstracts are sent.</p>
-        <div class="slack-actions"><button type="submit" disabled>Save Slack settings</button><button id="slack-remove" type="button" disabled>Remove webhook</button></div>
+        <div class="slack-actions"><button type="submit" disabled>Save Slack settings</button><button id="slack-remove" type="button" disabled>Remove connection</button></div>
       </form>
       <p id="slack-status" class="help" role="status"></p><p id="slack-feedback" class="feedback" role="status"></p>
       <a href="https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/" target="_blank" rel="noopener noreferrer">Slack webhook setup instructions ↗</a>

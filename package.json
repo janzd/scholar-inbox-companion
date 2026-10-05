@@ -1,6 +1,6 @@
 {
   "name": "scholar-inbox-companion",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Save papers to Scholar Inbox collections and browse your digest with abstracts and figures.",
   "type": "module",

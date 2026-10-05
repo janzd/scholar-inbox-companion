@@ -49,3 +49,43 @@ test('uncertain and rejected sends stay generic and are not retried, including a
   }
 });
 test('invalid message dates never become Slack text',()=>{assert.throws(()=>slackMessage('2026-09-30 <!channel>'));assert.throws(()=>slackMessage(null));});
+
+const TOKEN='xoxb-DEMO-NOT-A-REAL-BOT-TOKEN';
+test('DM setup validates credentials, requests API permission, and redacts saved tokens',async()=>{
+  const h=harness();let origins;
+  h.api.permissions.contains=async v=>{origins=v.origins;return true;};
+  await h.slack.configure({mode:'dm',token:TOKEN,userId:'U0123456789',enabled:true});
+  assert.deepEqual(origins,['https://slack.com/*']);assert.equal(h.calls.length,0);
+  assert.equal((await h.slack.status()).mode,'dm');
+  assert.equal(JSON.stringify(await h.slack.status()).includes(TOKEN),false);
+  await h.slack.configure({mode:'dm',token:'',userId:'U0123456789',enabled:false});
+  assert.equal(h.store[SLACK_CONFIG].token,TOKEN);
+  for(const values of [{token:'xoxp-invalid'},{userId:'<!channel>'},{mode:'invalid'}])await assert.rejects(()=>h.slack.configure({mode:'dm',token:TOKEN,userId:'U0123456789',enabled:false,...values}));
+  await h.slack.configure({mode:'webhook',webhook:WEBHOOK,enabled:false});
+  assert.equal(h.store[SLACK_CONFIG].token,undefined);
+});
+test('DM opens the bot conversation and posts once with a bearer token',async()=>{
+  const h=harness();await h.slack.configure({mode:'dm',token:TOKEN,userId:'U0123456789',enabled:true});
+  const calls=[];h.slack.fetch=async(url,options)=>{calls.push({url,options});return Response.json(url.endsWith('conversations.open')?{ok:true,channel:{id:'D0123456789'}}:{ok:true});};
+  const record={},result={accountKey:await digestAccount('alice'),date:'2026-10-06'};
+  await h.slack.deliver(result,record,async()=>{},()=>true);
+  await h.slack.deliver(result,record,async()=>{},()=>true);
+  assert.equal(calls.length,2);
+  assert.equal(calls[0].url,'https://slack.com/api/conversations.open');
+  assert.deepEqual(JSON.parse(calls[0].options.body),{users:'U0123456789'});
+  assert.equal(calls[1].url,'https://slack.com/api/chat.postMessage');
+  assert.equal(JSON.parse(calls[1].options.body).channel,'D0123456789');
+  for(const {options} of calls){assert.equal(options.headers.Authorization,`Bearer ${TOKEN}`);assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.body.includes(TOKEN),false);}
+  assert.equal((await h.slack.status()).status,'sent');
+});
+test('DM errors and uncertain posts are redacted and never automatically retried',async()=>{
+  for(const scenario of ['denied','invalid-channel','uncertain','rejected']){
+    const h=harness();await h.slack.configure({mode:'dm',token:TOKEN,userId:'U0123456789',enabled:true});
+    let calls=0;h.slack.fetch=async()=>{calls++;if(calls===1)return Response.json(scenario==='denied'?{ok:false,error:TOKEN}:{ok:true,channel:{id:scenario==='invalid-channel'?'C123':'D123'}});if(scenario==='uncertain')throw Error(TOKEN);return Response.json({ok:false,error:TOKEN});};
+    const r={},result={accountKey:await digestAccount('alice'),date:'2026-10-06'};
+    await h.slack.deliver(result,r,async()=>{},()=>true);await h.slack.deliver(result,r,async()=>{},()=>true);
+    assert.equal(calls,['denied','invalid-channel'].includes(scenario)?1:2);
+    assert.equal((await h.slack.status()).status,scenario==='uncertain'?'uncertain':'failed');
+    assert.equal(JSON.stringify(await h.slack.status()).includes(TOKEN),false);
+  }
+});
