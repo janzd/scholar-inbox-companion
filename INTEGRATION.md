@@ -123,3 +123,10 @@ Webhook secrets stay in trusted-context local storage, unsynced and unencrypted.
 Each account record now also retains `slackAttemptedDate`. Persist-before-send prevents duplicate attempts after worker restarts; ambiguous failures are not automatically retried. The badge is updated before Slack delivery, and Slack errors cannot stop normal digest behavior. Removing configuration deletes the webhook; Chrome's optional host grant can remain until revoked through Chrome.
 
 The existing hourly scheduler is reused; no separate backend, Slack OAuth flow, direct bot DMs, or real test sends were added. Destination channels and workspace approval are controlled by Slack. [Official webhook documentation](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) informed this adapter.
+
+
+## Discord notifications — version 0.10.0
+
+The Settings-only Discord routes configure an independent adapter and invalidate in-flight checks through the scheduler epoch. It uses trusted local storage, account binding, an optional `https://discord.com/*` grant, and independent `discordAttemptedDate` receipts. Secrets and raw API errors are never returned to Settings. Webhook destinations must be HTTPS discord.com `/api/webhooks/ID/TOKEN` or `/api/v10/webhooks/ID/TOKEN`, without queries, fragments, credentials or alternate ports. Execution adds `wait=true` and requires a returned message ID. Bot DMs use API v10 `users/@me/channels`, validate a type-1 channel and numeric ID, then post to its messages endpoint with Bot authorization. Requests omit cookies and reject redirects. Generic messages disable mentions and embeds. Failed/uncertain attempts are not automatically replayed. No real Discord messages were sent in development.
+
+References: [webhook execution](https://docs.discord.com/developers/resources/webhook#execute-webhook), [DM creation](https://docs.discord.com/developers/resources/user#create-dm), [message creation](https://docs.discord.com/developers/resources/message#create-message).

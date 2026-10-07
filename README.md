@@ -73,6 +73,19 @@ Settings also lets you turn hourly checks off, run **Check now**, and see the la
 
 Availability is inferred from a non-empty response explicitly dated today. The website API does not expose a verified generation-complete or email-delivery signal, so notifications may arrive at a different time from email and do not guarantee the entire digest has finished populating.
 
+### Discord setup (optional)
+
+Open **Settings → Discord notifications** and choose a destination:
+
+- **Channel webhook:** in a Discord text channel you manage, open **Edit Channel → Integrations → Webhooks**, create a webhook and copy its URL into Settings. Forum/media channels and thread-specific webhooks are not supported by this setup.
+- **Direct message:** create a bot in the [Discord Developer Portal](https://discord.com/developers/applications), install it in a server you share, and copy its Bot token into Settings. In Discord, enable **User Settings → Advanced → Developer Mode**, then right-click your profile and copy your user ID. Your privacy settings must permit the bot's DM. Only bot tokens are supported; no message-history access or privileged intents are required for these outgoing notices.
+
+Enable delivery, save, and grant optional access to `discord.com`. Keep hourly checks enabled. Saving does not send a test message; **Check now** or the next hourly check can notify for an unread digest that has not already been attempted. Slack and Discord can both be enabled and have separate daily attempt records. Opening a digest suppresses subsequent notifications for that date.
+
+Discord sends only a generic digest notice and website link, with mentions and link embeds disabled. Webhooks use `wait=true` for server confirmation. Failed or uncertain attempts are not automatically retried for the same date, including after replacing credentials. Status is shown when Settings opens; reopen Settings after checking to see the updated delivery result.
+
+Credentials stay in trusted local extension storage, not synced or encrypted by the extension, and are never returned to Settings. Leaving a secret field blank keeps the saved value; switching methods replaces the connection. Remove connection deletes the secret, but does not revoke Chrome's optional host permission. Live Discord delivery still requires user verification; automated tests use fixtures.
+
 ### Slack setup (optional)
 
 For direct messages, choose **Settings → Slack notifications → Direct message**. Install a Slack app with the `chat:write` and `im:write` bot scopes, then enter its Bot User OAuth Token (`xoxb-…`) and your Slack member ID. Enable delivery and save, granting optional access to `slack.com` when Chrome asks. The extension opens a DM with your bot and posts the digest notice there; it does not request message history permissions. Keep the token private. It is stored locally in trusted extension storage, not synced or encrypted by the extension, and is never returned to Settings. Blank token fields keep the saved token; changing delivery methods replaces the connection.
@@ -98,13 +111,14 @@ If you cloned the repository, run `git pull --ff-only` from its folder. If you d
 
 ## Privacy and permissions
 
-Requests go directly to the current paper website, arXiv, and Scholar Inbox, plus Slack only when Slack delivery is configured and enabled. There is no separate backend, analytics service, or AI service involved in the current extension.
+Requests go directly to the current paper website, arXiv, and Scholar Inbox, plus Slack or Discord only when their delivery is configured and enabled. There is no separate backend, analytics service, or AI service involved in the current extension.
 
 | Permission | Purpose |
 | --- | --- |
 | `activeTab` | Temporarily access the tab you click on: read its URL and download public paper pages/PDFs from its origin. |
 | `storage` | Keep a bounded record-lookup cache and timing diagnostics in browser-session memory, plus notification preferences and bounded date/account receipts locally. |
 | `alarms` | Schedule a check every 60 minutes while enabled. |
+| `https://discord.com/*` (optional) | Post to your configured Discord webhook or bot DM. |
 | `https://slack.com/*` (optional) | Open the configured bot DM and post digest notifications using the bot token. |
 | `https://hooks.slack.com/*` (optional) | Post generic digest notifications to the webhook you configure and enable. |
 | `notifications` (optional) | Show desktop alerts only when enabled and permitted. |
@@ -114,7 +128,7 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox, plu
 
 Digest requests send the requested date and page to Scholar Inbox; detail requests send the paper slug. Digest content stays in the open reader’s memory and is cleared on navigation, refresh, or an authentication error. It is not added to the extension’s lookup cache or local storage. Images load directly from Scholar Inbox’s public figure/first-page paths and may use Chrome’s normal image cache. No extra host permission or API key is required. Hourly checks fetch only the first batch of today’s digest, without figures or detail enrichment; paper content from those checks is discarded.
 
-Notification preferences, optional Slack configuration (including its secret webhook URL or bot token, Slack recipient ID, and bound account hash), last-check status/timestamps, and date receipts for up to five accounts are stored in `chrome.storage.local`. Accounts are distinguished using a SHA-256 hash of the service’s username; no raw Scholar Inbox username, paper content, or Scholar Inbox credentials are stored there. The optional Slack webhook secret is the credential exception described above. This is a pseudonymous identifier, not an anonymity guarantee. Date receipts survive browser restarts to prevent duplicate alerts.
+Notification preferences, optional Slack and Discord configurations (including its secret webhook URL or bot token, recipient ID, and bound account hash), last-check status/timestamps, and date receipts for up to five accounts are stored in `chrome.storage.local`. Accounts are distinguished using a SHA-256 hash of the service’s username; no raw Scholar Inbox username, paper content, or Scholar Inbox credentials are stored there. The optional messaging credentials are the exceptions described above. This is a pseudonymous identifier, not an anonymity guarantee. Date receipts survive browser restarts to prevent duplicate alerts.
 
 Appearance preferences are stored in extension-local Web Storage and persist across browser restarts. They contain only the mode (`light`, `dark`, or `system`) and palette (`blue` or `scholar`) and are never sent to a website.
 

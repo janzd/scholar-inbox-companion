@@ -124,3 +124,11 @@ test('unread hourly results reach Slack independently of desktop settings; read 
   await a.viewed({accountKey:await digestAccount('alice'),date:'2026-09-30'});await a.check(true);assert.equal(calls.length,1);
   await a.configure({enabled:false,desktop:false});await a.check(true);assert.equal(calls.length,1);
 });
+
+test('Discord still runs if Slack fails; read and disabled digests suppress both',async()=>{
+ const h=harness();let discord=0;
+ const a=new DigestAlerts({api:h.api,client:h.client,now:h.now,slack:{deliver:async()=>{throw Error('Slack failed');}},discord:{deliver:async()=>{discord++;}}});
+ await a.check();assert.equal(discord,1);assert.equal(h.badge,'NEW');
+ await a.viewed({accountKey:await digestAccount('alice'),date:'2026-09-30'});await a.check(true);assert.equal(discord,1);
+ await a.configure({enabled:false,desktop:false});await a.check(true);assert.equal(discord,1);
+});

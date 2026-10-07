@@ -73,9 +73,32 @@
       <p id="slack-status" class="help" role="status"></p><p id="slack-feedback" class="feedback" role="status"></p>
       <a href="https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/" target="_blank" rel="noopener noreferrer">Slack webhook setup instructions ↗</a>
     </section>
+    <section class="digest-settings" aria-labelledby="discord-heading">
+      <h2 id="discord-heading">Discord notifications</h2>
+      <p class="help">Choose a channel webhook or a direct message from your Discord bot. Your server must allow webhooks or bot installation.</p>
+      <form id="discord-form">
+        <label for="discord-mode">Send to</label>
+        <select id="discord-mode" disabled><option value="webhook">Channel webhook</option><option value="dm">Direct message</option></select>
+        <div id="discord-dm-fields" hidden>
+          <label for="discord-token">Bot token</label><input id="discord-token" type="password" autocomplete="off" spellcheck="false" placeholder="Discord bot token" disabled>
+          <label for="discord-user">Your Discord user ID</label><input id="discord-user" type="text" autocomplete="off" spellcheck="false" placeholder="123456789012345678" disabled>
+          <p class="help">Create a bot in the Discord Developer Portal and install it in a server you share with it. Copy the token from its Bot page. Turn on Developer Mode in Discord, then right-click your profile and Copy User ID. Your DM privacy settings must allow the bot to message you. Use a bot token, not your personal account token.</p>
+        </div>
+        <div id="discord-webhook-fields"><label for="discord-webhook">Incoming webhook URL</label>
+        <input id="discord-webhook" type="password" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…" disabled>
+        <p class="help">Stored only in this Chrome profile, not synced or encrypted by the extension. Treat the URL as a secret. Leaving it blank keeps the saved webhook.</p></div>
+        <p class="help">Bot tokens are also stored locally, not synced or encrypted by the extension. Leave the token blank to keep it. Switching delivery methods replaces the previous connection.</p>
+        <label class="check-option"><input id="discord-enabled" type="checkbox" disabled><span>Enable Discord notifications</span></label>
+        <p class="help">Uses the Scholar Inbox account signed in when enabled. Hourly checks must also be on. Future checks can post a generic digest notice and a Scholar Inbox link; no paper titles or abstracts are sent.</p>
+        <div class="discord-actions"><button type="submit" disabled>Save Discord settings</button><button id="discord-remove" type="button" disabled>Remove connection</button></div>
+      </form>
+      <p id="discord-status" class="help" role="status"></p><p id="discord-feedback" class="feedback" role="status"></p>
+      <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank" rel="noopener noreferrer">Discord webhook setup instructions ↗</a>
+    </section>
   </main>
   <footer>Scholar Inbox Companion · Unofficial companion for Scholar Inbox</footer>
 <script type="module" src="options-alerts.js"></script>
 <script type="module" src="options-slack.js"></script>
+<script type="module" src="options-discord.js"></script>
 </body>
 </html>

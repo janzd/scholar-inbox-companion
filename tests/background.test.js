@@ -66,7 +66,7 @@ test('background accepts the popup resolve and choose routes and rejects other s
     assert.equal(alertStatus.ok,true);assert.equal(alertStatus.data.enabled,false);
     const alertConfigured=await new Promise(resolve=>listener({type:'digestAlertSettings',values:{enabled:false,desktop:true}},settingsSender,resolve));
     assert.equal(alertConfigured.ok,true);assert.equal(alertStore.digestAlertPreferencesV1.desktop,true);
-    for(const type of ['slackSettings','slackStatus','digestAlertSettings','digestAlertStatus','digestAlertCheck'])for(const source of [sender,digestSender])assert.equal(listener({type},source,()=>assert.fail('Only Settings controls alerts')),false);
+    for(const type of ['discordSettings','discordStatus','slackSettings','slackStatus','digestAlertSettings','digestAlertStatus','digestAlertCheck'])for(const source of [sender,digestSender])assert.equal(listener({type},source,()=>assert.fail('Only Settings controls alerts')),false);
     for(const type of ['save','digest','digestViewed'])assert.equal(listener({type},settingsSender,()=>assert.fail('Settings cannot invoke paper routes')),false);
     const dated=await new Promise(resolve=>listener({type:'digest'},{...digestSender,url:digestSender.url+'?date=2026-09-07'},resolve));
     assert.equal(dated.ok,true);

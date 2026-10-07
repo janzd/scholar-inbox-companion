@@ -71,3 +71,8 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 - Unit tests use a deliberately fake webhook and an injected fetch stub. They cover URL restriction, secret redaction, trusted storage, offline disabled setup, permission checks, account binding, generic payloads, credential/redirect policy, persistent duplicate suppression, failed/uncertain results, and sender allowlists. Scheduler integration verifies unread-only delivery independent of desktop notifications.
 - Settings browser tests mock the extension APIs and block external network requests. They exercise saving disabled, masked/cleared inputs, enabling, removing configuration, and narrow layouts in both themes/palettes.
 - No real Slack endpoint was contacted and no Slack messages were sent. Workspace installation/approval, real webhook authentication and delivery remain unverified.
+
+
+# Discord delivery — version 0.10.0
+
+104 unit tests pass, covering strict webhook validation, disabled setup, credential replacement/redaction, bot DM routing, HTTP/uncertain responses, no automatic retry, account/permission checks, and Slack-failure isolation. 148 Settings browser checks pass across both themes/palettes, including Discord webhook/DM setup, permission-denial rollback, secret clearing, removal and narrow layouts. Dark Settings preview inspected. No Discord credential was configured or real message sent; live delivery remains for user testing.

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Scholar Inbox Companion",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Save papers to Scholar Inbox collections and browse your personalized digest with abstracts and figures.",
   "permissions": [
     "activeTab",
@@ -42,6 +42,7 @@
   ],
   "optional_host_permissions": [
     "https://hooks.slack.com/*",
-    "https://slack.com/*"
+    "https://slack.com/*",
+    "https://discord.com/*"
   ]
 }
