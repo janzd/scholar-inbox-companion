@@ -82,7 +82,7 @@ Open **Settings → Discord notifications** and choose a destination:
 
 Enable delivery, save, and grant optional access to `discord.com`. Keep hourly checks enabled. Saving does not send a test message; **Check now** or the next hourly check can notify for an unread digest that has not already been attempted. Slack and Discord can both be enabled and have separate daily attempt records. Opening a digest suppresses subsequent notifications for that date.
 
-Discord sends only a generic digest notice and website link, with mentions and link embeds disabled. Webhooks use `wait=true` for server confirmation. Failed or uncertain attempts are not automatically retried for the same date, including after replacing credentials. Status is shown when Settings opens; reopen Settings after checking to see the updated delivery result.
+Discord sends one message with up to five paper cards in digest relevance order, including titles, abstract excerpts, paper/Scholar Inbox links, and a leading figure (or first-page preview) where available. Mentions are disabled; card images are enabled. Abstracts are shortened to fit Discord’s 6,000-character shared embed limit. Webhooks use `wait=true` for server confirmation. Failed or uncertain attempts are not automatically retried for the same date, including after replacing credentials. Status is shown when Settings opens; reopen Settings after checking to see the updated delivery result.
 
 Credentials stay in trusted local extension storage, not synced or encrypted by the extension, and are never returned to Settings. Leaving a secret field blank keeps the saved value; switching methods replaces the connection. Remove connection deletes the secret, but does not revoke Chrome's optional host permission. Live Discord delivery still requires user verification; automated tests use fixtures.
 
@@ -93,7 +93,7 @@ For direct messages, choose **Settings → Slack notifications → Direct messag
 
 Slack delivery is off until you configure and enable it under **Settings → Slack notifications**. Create an incoming webhook for the intended Slack channel using [Slack’s setup instructions](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/); your workspace may require app approval. Paste its URL into Settings and save. Saving with delivery off sends nothing. The webhook's destination is chosen in Slack; OAuth installation is not implemented.
 
-Enabling delivery asks Chrome for optional access to `hooks.slack.com` and binds the connection to the currently signed-in Scholar Inbox account. Leave hourly checks enabled. Future hourly checks or **Check now** can send one generic notice per unread digest date/account, containing the date and a Scholar Inbox website link. No titles, abstracts, figures, account names, or extension-local links are included. Reader, badge, and desktop notifications continue to work without Slack.
+Enabling delivery asks Chrome for optional access to `hooks.slack.com` and binds the connection to the currently signed-in Scholar Inbox account. Leave hourly checks enabled. Future hourly checks or **Check now** can send one rich message per unread digest date/account, containing the top five paper titles, abstracts (up to 2,800 characters each), paper/Scholar Inbox links, and leading figures where available. No account names or extension-local links are included. Reader, badge, and desktop notifications continue to work without Slack.
 
 The webhook URL is a secret stored in `chrome.storage.local`, restricted to trusted extension contexts. It is not synced or encrypted by the extension, and is never returned to the Settings page after saving or included in logs/errors. **Remove webhook** deletes it and disables delivery. A blank field preserves a saved webhook. Disable and re-enable delivery while signed into another account to change the account binding.
 
@@ -120,7 +120,7 @@ Requests go directly to the current paper website, arXiv, and Scholar Inbox, plu
 | `alarms` | Schedule a check every 60 minutes while enabled. |
 | `https://discord.com/*` (optional) | Post to your configured Discord webhook or bot DM. |
 | `https://slack.com/*` (optional) | Open the configured bot DM and post digest notifications using the bot token. |
-| `https://hooks.slack.com/*` (optional) | Post generic digest notifications to the webhook you configure and enable. |
+| `https://hooks.slack.com/*` (optional) | Post rich digest notifications to the webhook you configure and enable. |
 | `notifications` (optional) | Show desktop alerts only when enabled and permitted. |
 | `scripting` | Read scholarly metadata and the paper heading from that tab, on demand. |
 | `https://arxiv.org/*` | Retrieve the paper’s public abstract page and title. |
@@ -187,3 +187,7 @@ Load `extension/` unpacked in Chrome, edit the source, and reload the extension 
 For a digest preview, serve `extension/` and open `digest.html?preview=1`. It uses one public example paper and loads its public figures from Scholar Inbox, with no account requests. Add `&view=empty`, `&view=missing`, `&view=error`, or `&view=signed-out` to inspect fallback states.
 
 For a UI-only popup preview, serve `extension/` with a local static server and open `popup.html?preview=1`. It displays example collections and cannot save papers. Add `&view=loading`, `&view=candidates`, `&view=manual`, `&view=error`, `&view=success`, `&view=warning`, or `&view=empty` to inspect other states. Use the icon switch to inspect either palette. Preview preferences are separate from the installed extension.
+
+### Rich notification content
+
+Enabled Slack and Discord destinations receive your personalized top-five paper selection, including abstract text and public figure URLs. Missing abstracts/figures are fetched on demand (at most two requests at once), shared between both destinations for that check, and kept only in memory. Account identity is verified again after enrichment. Individual missing details do not prevent the remaining cards from being sent. Figures use public Scholar Inbox image URLs, so external display depends on Slack/Discord being able to fetch them. No AI summaries are generated. Shortened abstracts end in an ellipsis; the links lead to the complete papers. Existing daily receipts remain in effect: upgrading does not resend already-attempted digests.
