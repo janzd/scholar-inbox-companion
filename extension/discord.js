@@ -1,4 +1,5 @@
-import {digestAccount,digestDate} from './digest-core.js';
+import {discordDigestMessage} from './digest-message.js';
+import {digestAccount} from './digest-core.js';
 export const DISCORD_CONFIG='discordDeliveryV1';
 export const DISCORD_ORIGIN='https://discord.com/*';
 const botToken=value=>typeof value==='string'&&/^[A-Za-z0-9_.-]{30,300}$/.test(value.trim())?value.trim():null;
@@ -8,10 +9,8 @@ const configured=c=>c.mode==='dm'?!!(botToken(c.token)&&userId(c.userId)):!!webh
 export function webhookUrl(value){
   try{const u=new URL(String(value).trim());return u.protocol==='https:'&&u.hostname==='discord.com'&&!u.port&&!u.username&&!u.password&&!u.search&&!u.hash&&/^\/api\/(?:v10\/)?webhooks\/[0-9]{17,20}\/[A-Za-z0-9_-]{20,200}$/.test(u.pathname)?u.href:null;}catch{return null;}
 }
-export function discordMessage(date){
-  if(typeof date!=='string'||digestDate(date)!==date)throw Error('Invalid digest date.');
-  return {content:`Your Scholar Inbox digest for ${date} is ready.\n<https://www.scholar-inbox.com/digest> or choose Your digest in the Companion extension.`,allowed_mentions:{parse:[]},flags:4};
-}
+export const discordMessage=discordDigestMessage;
+
 export class DiscordDelivery {
   constructor({api,client,fetchFn=globalThis.fetch.bind(globalThis)}){
     this.api=api;this.client=client;this.fetch=fetchFn;
@@ -46,12 +45,14 @@ export class DiscordDelivery {
     if(record.discordAttemptedDate&&record.discordAttemptedDate>=result.date)return;
     if(!await this.api.permissions.contains({origins:[DISCORD_ORIGIN]})){await this.note(c,'permission-required');return;}
     if(!isCurrent())return;
+    const papers=result.getPapers?await result.getPapers():result.papers||[];
+    if(!isCurrent())return;
     record.discordAttemptedDate=result.date;
     await persist(); // At most one attempt per account/date, even after an uncertain result.
     if(!isCurrent())return;
     await this.note(c,'sending',result.date);
     try{
-      const message=discordMessage(result.date);
+      const message=discordMessage(result.date,papers);
       if(c.mode==='dm'){
         const opened=await this.callBot(c,'users/@me/channels',{recipient_id:c.userId});
         if(!opened.ok||opened.data?.type!==1||!userId(opened.data?.id)){await this.note(c,'failed',result.date);return;}

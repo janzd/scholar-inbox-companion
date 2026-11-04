@@ -1,3 +1,4 @@
+import {enrichDigestPapers} from './digest-message.js';
 import {digestDate,digestQuery,digestAccount,normalizeDigest} from './digest-core.js';
 export const ALERT_ALARM='digest-hourly', ALERT_NOTIFICATION='digest-ready';
 export const ALERT_PREFS='digestAlertPreferencesV1', ALERT_STATE='digestAlertStateV1';
@@ -17,7 +18,8 @@ export async function inspectDailyDigest(client, now) {
   const accountKey=await digestAccount(raw.username);
   if(!accountKey)throw Object.assign(new Error('The digest account could not be identified.'),{code:'UNRECOGNIZED'});
   const data=normalizeDigest(raw);
-  return {accountKey,date:today,ready:data.date===today&&raw.empty_digest!==true&&data.papers.length>0};
+  let enriched;
+  return {accountKey,date:today,getPapers:()=>enriched??=(enrichDigestPapers(client,data.papers,accountKey)),ready:data.date===today&&raw.empty_digest!==true&&data.papers.length>0};
 }
 
 export class DigestAlerts {

@@ -76,3 +76,8 @@ Downloads omit cookies except for the scoped OpenReview session use above, rejec
 # Discord delivery — version 0.10.0
 
 104 unit tests pass, covering strict webhook validation, disabled setup, credential replacement/redaction, bot DM routing, HTTP/uncertain responses, no automatic retry, account/permission checks, and Slack-failure isolation. 148 Settings browser checks pass across both themes/palettes, including Discord webhook/DM setup, permission-denial rollback, secret clearing, removal and narrow layouts. Dark Settings preview inspected. No Discord credential was configured or real message sent; live delivery remains for user testing.
+
+
+# Rich notifications — version 0.11.0
+
+Payload tests cover top-five order, links/images, missing or unsafe data, platform size budgets, plain-text Slack content, Discord mention suppression and enabled embeds. Enrichment tests cover two concurrent requests, detail failures and account/auth changes. No real Slack or Discord messages sent during implementation; live rendering requires user verification.
