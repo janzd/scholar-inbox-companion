@@ -1,4 +1,5 @@
-import {digestAccount,digestDate} from './digest-core.js';
+import {slackDigestMessage} from './digest-message.js';
+import {digestAccount} from './digest-core.js';
 export const SLACK_CONFIG='slackDeliveryV1';
 export const SLACK_ORIGIN='https://hooks.slack.com/*';
 export const SLACK_API_ORIGIN='https://slack.com/*';
@@ -9,10 +10,8 @@ const origin=c=>c.mode==='dm'?SLACK_API_ORIGIN:SLACK_ORIGIN;
 export function webhookUrl(value){
   try{const u=new URL(String(value).trim());return u.protocol==='https:'&&u.hostname==='hooks.slack.com'&&!u.port&&!u.username&&!u.password&&!u.search&&!u.hash&&/^\/services\/[A-Za-z0-9_-]{3,100}\/[A-Za-z0-9_-]{3,100}\/[A-Za-z0-9_-]{10,200}$/.test(u.pathname)?u.href:null;}catch{return null;}
 }
-export function slackMessage(date){
-  if(typeof date!=='string'||digestDate(date)!==date)throw Error('Invalid digest date.');
-  return {text:`Your Scholar Inbox digest for ${date} is ready.\n<https://www.scholar-inbox.com/digest|Open Scholar Inbox> or choose Your digest in the Companion extension.`,unfurl_links:false,unfurl_media:false};
-}
+export const slackMessage=slackDigestMessage;
+
 export class SlackDelivery {
   constructor({api,client,fetchFn=globalThis.fetch.bind(globalThis)}){
     this.api=api;this.client=client;this.fetch=fetchFn;
@@ -47,12 +46,14 @@ export class SlackDelivery {
     if(record.slackAttemptedDate&&record.slackAttemptedDate>=result.date)return;
     if(!await this.api.permissions.contains({origins:[origin(c)]})){await this.note(c,'permission-required');return;}
     if(!isCurrent())return;
+    const papers=result.getPapers?await result.getPapers():result.papers||[];
+    if(!isCurrent())return;
     record.slackAttemptedDate=result.date;
     await persist(); // At most one attempt per account/date, even after an uncertain result.
     if(!isCurrent())return;
     await this.note(c,'sending',result.date);
     try{
-      const message=slackMessage(result.date);
+      const message=slackMessage(result.date,papers);
       if(c.mode==='dm'){
         const opened=await this.callBot(c,'conversations.open',{users:c.userId});
         if(!opened.ok||!/^D[A-Z0-9]+$/.test(opened.channel?.id||'')){await this.note(c,'failed',result.date);return;}
